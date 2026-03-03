@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Socket</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+  <h1>Test Connessione Asta</h1>
+  <button onclick="testAsta()">Simula inizio asta per Barella</button>
+
+  <script>
+    // 1. Ci connettiamo al nostro server
+    const socket = io('http://localhost:3000');
+
+    // 2. Diciamo cosa fare quando riceviamo l'evento 'auction_started'
+    socket.on('auction_started', (data) => {
+      alert("Dal Server: È iniziata l'asta per " + data.name + "!");
+    });
+
+    // 3. Funzione per inviare un messaggio al server
+    function testAsta() {
+      socket.emit('start_auction', { name: "Nicolò Barella", role: "C", basePrice: 15 });
+    }
+  </script>
+</body>
+</html>

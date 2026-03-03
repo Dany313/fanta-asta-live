@@ -1,0 +1,20 @@
+# Dipendenze Node.js
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# File di configurazione e Sicurezza (Password, API Keys)
+.env
+backend/.env
+frontend/.env
+
+# Build del frontend (React)
+frontend/dist/
+frontend/build/
+
+# File di sistema operativo
+.DS_Store
+Thumbs.db
+
+# Dati del database Docker (se hai mappato un volume locale)
+pgdata/
