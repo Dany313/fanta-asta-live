@@ -2,7 +2,7 @@ const getPlayersQuery = `
       SELECT p.* FROM players p
       WHERE p.is_active = true 
       AND p.id NOT IN (SELECT player_id FROM rosters)
-      ORDER BY p.role DESC, p.name ASC
+      ORDER BY p.fvm DESC, p.name ASC
     `;
 const getRostersQuery = `
       SELECT r.team_id, p.id as player_id, p.name, p.role, r.purchase_price

@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
-import Button from '../../components/Button';
+import CustomButton from '../../components/CustomButton';
 import PlayerTable from '../../components/PlayerTable';
 import PlayerCard from '../../components/PlayerCard';
+import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
 
 // 1. Creiamo la connessione WebSocket al nostro backend.
 // La mettiamo fuori dal componente così non viene ricreata a ogni aggiornamento della pagina.
@@ -21,6 +23,7 @@ export default function AdminDashboard() {
     const [selectedTeam, setSelectedTeam] = useState('');
     const [sellPrice, setSellPrice] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
+    const [roleFilter, setRoleFilter] = useState('');
 
     const handleLogout = () => {
         // Strappiamo il braccialetto VIP!
@@ -118,16 +121,18 @@ export default function AdminDashboard() {
     };
 
     // React ricalcolerà questa lista in automatico ogni volta che l'utente digita una lettera!
-    const filteredPlayers = players.filter(player =>
-        player.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredPlayers = players.filter(player => {
+        const nameMatch = player.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const roleMatch = !roleFilter || player.role.toUpperCase() === roleFilter.toUpperCase();
+        return nameMatch && roleMatch;
+    });
 
     // --- TEMPLATE (L'equivalente dell'HTML) ---
     return (
         <div style={{ padding: '20px', fontFamily: 'Arial' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h2>👨‍💻 Plancia di Comando Admin</h2>
-                <Button variant="danger" onClick={handleLogout}>🚪 Disconnetti</Button>
+                <CustomButton variant="danger" onClick={handleLogout}>🚪 Disconnetti</CustomButton>
             </div>
 
             {/* SEZIONE 1: Il giocatore attualmente all'asta */}
@@ -161,9 +166,9 @@ export default function AdminDashboard() {
                                 min="1"
                             />
 
-                            <Button variant="primary" onClick={handleAssign}>
+                            <CustomButton variant="primary" onClick={handleAssign}>
                                 ✅ Conferma
-                            </Button>
+                            </CustomButton>
                         </div>
                     </PlayerCard>
                 </div>
@@ -216,7 +221,16 @@ export default function AdminDashboard() {
 
             {/* SEZIONE 2: La lista dei giocatori da mettere all'asta */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <h3>Listone Giocatori ({players.length} disponibili)</h3>
+                <h3>Listone Giocatori ({filteredPlayers.length} disponibili)</h3>
+
+                {/* FILTRO PER RUOLO */}
+                <ButtonGroup aria-label="Basic button group">
+                    <Button onClick={() => setRoleFilter('')} variant={!roleFilter ? 'contained' : 'outlined'}>Tutti</Button>
+                    <Button onClick={() => setRoleFilter('P')} variant={roleFilter === 'P' ? 'contained' : 'outlined'}>P</Button>
+                    <Button onClick={() => setRoleFilter('D')} variant={roleFilter === 'D' ? 'contained' : 'outlined'}>D</Button>
+                    <Button onClick={() => setRoleFilter('C')} variant={roleFilter === 'C' ? 'contained' : 'outlined'}>C</Button>
+                    <Button onClick={() => setRoleFilter('A')} variant={roleFilter === 'A' ? 'contained' : 'outlined'}>A</Button>
+                </ButtonGroup>
 
                 {/* LA NOSTRA BARRA DI RICERCA */}
                 <input
@@ -232,7 +246,7 @@ export default function AdminDashboard() {
                 <p>Caricamento in corso...</p>
             ) : (
                 <PlayerTable
-                    players={filteredPlayers.slice(0, 50)}
+                    players={filteredPlayers}
                     onPlayerClick={handleStartAuction}
                     buttonText="Metti all'asta"
                     buttonVariant="success"

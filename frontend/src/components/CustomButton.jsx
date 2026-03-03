@@ -2,7 +2,7 @@ import React from 'react';
 
 // Le "props" sono i parametri in ingresso del componente
 // children è una prop speciale di React che rappresenta il contenuto tra i tag <Button>...</Button>
-export default function Button({ children, onClick, variant = 'primary', style }) {
+export default function CustomButton({ children, onClick, variant = 'primary', style }) {
   
   // Definiamo un dizionario di colori in base alla "variante"
   const colors = {

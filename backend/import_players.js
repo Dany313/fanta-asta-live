@@ -1,5 +1,5 @@
 const xlsx = require('xlsx');
-const db = require('./db');
+const db = require('./src/config/db');
 
 const FILE_PATH = './Quotazioni_Fantacalcio_Stagione_2024_25.ods';
 

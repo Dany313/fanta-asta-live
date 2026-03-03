@@ -5,6 +5,7 @@ require('dotenv').config();
 const query = require('./src/queries');
 
 const app = require('./src/app');
+const initializeDatabase = require('./src/config/setupDb'); // 🌟 IMPORTIAMO LO SCRIPT
 
 const port = process.env.PORT || 3000;
 
@@ -25,8 +26,10 @@ console.log(query.query2);
 // 🌟 MAGIA: Importiamo il modulo dei socket e gli passiamo la nostra istanza 'io'
 require('./src/sockets/socketHandler')(io);
 
-// Avviamo il Server
-server.listen(port, () => {
-  console.log(`🚀 Server in ascolto su http://localhost:${port}`);
-  console.log(`⚡ Motore Socket.io pronto...`);
+// 🌟 AVVIAMO PRIMA IL DB E POI IL SERVER HTTP
+initializeDatabase().then(() => {
+  server.listen(port, () => {
+    console.log(`🚀 Server in ascolto su http://localhost:${port}`);
+    console.log(`⚡ Motore Socket.io pronto...`);
+  });
 });
