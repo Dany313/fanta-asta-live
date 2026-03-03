@@ -1,201 +1,177 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { io } from 'socket.io-client';
-import { useNavigate } from 'react-router-dom'; // Aggiungi questo in cima
+import { useNavigate } from 'react-router-dom';
+
 import PlayerCard from '../../components/PlayerCard';
+import BidPanel from '../../components/BidPanel';
+import AuctionLog from '../../components/AuctionLog';
 
 const socket = io('http://localhost:3000');
 
 export default function ViewerBoard() {
-    const navigate = useNavigate(); // Inizializza la navigazione
-    const myTeamId = localStorage.getItem('viewerTeamId'); // Chi sono io?
-    // --- STATO ---
-    const [currentAuction, setCurrentAuction] = useState(null);
-    const [lastPurchase, setLastPurchase] = useState(null);
+  const navigate = useNavigate();
 
-    const [teams, setTeams] = useState([]);
-    const [rosters, setRosters] = useState([]); // 🌟 NUOVO STATO
+  // --- STATO ---
+  const [activeAuction, setActiveAuction] = useState(null);
+  const [lastPurchase, setLastPurchase] = useState(null);
+  const [myTeam, setMyTeam] = useState(null);
 
-    // --- EFFETTI ---
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const resTeams = await axios.get('http://localhost:3000/api/teams');
-                setTeams(resTeams.data);
+  useEffect(() => {
+    // 1. Recuperiamo i dati della nostra squadra dal localStorage
+    const teamDataString = localStorage.getItem('teamData');
+    if (teamDataString) {
+      setMyTeam(JSON.parse(teamDataString));
+    } else {
+      // Se non ci sono dati, rimandiamo alla home
+      navigate('/');
+      return;
+    }
 
-                // 🌟 SCARICHIAMO LE ROSE
-                const resRosters = await axios.get('http://localhost:3000/api/rosters');
-                setRosters(resRosters.data);
-            } catch (error) {
-                console.error("Errore nel caricamento dati:", error);
-            }
-        };
-        fetchData();
+    // --- ASCOLTATORI SOCKET ---
+    socket.on('auction_started', (data) => {
+      setActiveAuction(data);
+      setLastPurchase(null); // Nascondiamo l'ultimo acquisto
+    });
 
-        socket.on('auction_started', (playerData) => {
-            setCurrentAuction(playerData);
-            setLastPurchase(null);
-        });
+    socket.on('auction_update', (update) => {
+      setActiveAuction(prev => ({
+        ...prev,
+        highestBid: update.highestBid,
+        highestBidderName: update.highestBidderName,
+        history: update.history
+      }));
+    });
 
+    socket.on('player_assigned', (response) => {
+      if (response.success) {
+        setLastPurchase(response.data);
+        setActiveAuction(null);
+      }
+    });
 
+    socket.on('bid_error', (error) => {
+      alert(`⚠️ ${error.message}`);
+    });
 
-        socket.on('player_assigned', (response) => {
-            if (response.success) {
-                setLastPurchase(response.data);
-                setCurrentAuction(null);
+    // Ascoltiamo se l'Admin ci butta fuori!
+    socket.on('force_logout', (data) => {
+      const currentTeam = JSON.parse(localStorage.getItem('teamData'));
+      if (currentTeam && currentTeam.id === data.teamId) {
+        alert("L'Admin ti ha disconnesso.");
+        localStorage.removeItem('viewerToken');
+        localStorage.removeItem('teamData');
+        navigate('/');
+      }
+    });
 
-                setTeams((prevTeams) =>
-                    prevTeams.map(team =>
-                        team.id === Number(response.data.teamId)
-                            ? { ...team, remaining_budget: team.remaining_budget - response.data.price }
-                            : team
-                    )
-                );
-
-                // 🌟 AGGIUNGIAMO IL NUOVO GIOCATORE ALLA ROSA LOCALE IN TEMPO REALE
-                setRosters((prevRosters) => [
-                    ...prevRosters,
-                    {
-                        team_id: Number(response.data.teamId),
-                        player_id: response.data.playerId,
-                        name: response.data.playerName,
-                        role: response.data.playerRole, // Ecco perché ci serviva!
-                        purchase_price: response.data.price
-                    }
-                ]);
-            }
-        });
-
-        // 🌟 ASCOLTIAMO L'ORDINE DI ESPULSIONE
-        socket.on('force_logout', (payload) => {
-            // Se l'ID espulso è il mio... addio!
-            if (Number(payload.teamId) === Number(myTeamId)) {
-                alert("⚠️ Sei stato disconnesso dall'Amministratore.");
-                localStorage.removeItem('viewerToken');
-                localStorage.removeItem('viewerTeamId');
-                localStorage.removeItem('viewerTeamName');
-                navigate('/'); // Torniamo alla home
-            }
-        });
-
-        return () => {
-            socket.off('auction_started');
-            socket.off('player_assigned');
-            socket.off('force_logout');
-        };
-    }, [myTeamId, navigate]);
-
-    // 🌟 FUNZIONE CHE CONTA I GIOCATORI PER RUOLO
-    const getRoleCount = (teamId, role) => {
-        return rosters.filter(r => r.team_id === teamId && r.role === role).length;
+    return () => {
+      socket.off('auction_started');
+      socket.off('auction_update');
+      socket.off('player_assigned');
+      socket.off('bid_error');
+      socket.off('force_logout');
     };
+  }, [navigate]);
 
-    // --- TEMPLATE CON LAYOUT A DUE COLONNE ---
-    return (
-        <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial', backgroundColor: '#f1f2f6' }}>
+  // --- LOGICA ---
+  const handleBid = (amount) => {
+    if (!myTeam) return;
+    
+    // Inviamo la nostra puntata al server!
+    socket.emit('place_bid', {
+      teamId: myTeam.id,
+      teamName: myTeam.name,
+      amount: amount
+    });
+  };
 
-            {/* ==========================================
-          COLONNA SINISTRA: L'Asta (75% dello spazio) 
-          ========================================== */}
-            <div style={{ flex: '3', padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <h2 style={{ marginBottom: '40px', color: '#2f3542' }}>📺 Tabellone Live Asta</h2>
+  const handleLogout = () => {
+    localStorage.removeItem('viewerToken');
+    localStorage.removeItem('teamData');
+    navigate('/');
+  };
 
-                {!currentAuction && !lastPurchase && (
-                    <div style={{ padding: '40px', backgroundColor: '#ffffff', borderRadius: '10px', color: '#747d8c', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-                        <h3>In attesa che l'Admin faccia partire un'asta...</h3>
-                    </div>
-                )}
-
-                {!currentAuction && !lastPurchase && (
-                    <div style={{ padding: '40px', backgroundColor: '#ffffff', borderRadius: '10px', color: '#747d8c', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-                        <h3>In attesa che l'Admin faccia partire un'asta...</h3>
-                    </div>
-                )}
-
-                {/* Giocatore attualmente all'asta */}
-                {currentAuction && (
-                    <PlayerCard player={currentAuction} />
-                )}
-
-                {/* Ultimo giocatore venduto */}
-                {lastPurchase && !currentAuction && (
-                    <PlayerCard
-                        player={{
-                            name: lastPurchase.playerName,
-                            role: lastPurchase.playerRole || '?',
-                            club: 'Venduto', // Sovrascriviamo il club per mostrare che è andato
-                            purchase_price: lastPurchase.price // Usiamo purchase_price invece di current_price
-                        }}
-                        title="🎉 VENDUTO!"
-                        bgColor="#ffb142" // Arancione
-                        textColor="#2c2c54"
-                    >
-                        <p style={{ fontSize: '20px', margin: '0' }}>Acquistato da:</p>
-                        <p style={{ fontSize: '28px', fontWeight: 'bold', margin: '10px 0' }}>
-                            {teams.find(t => t.id === Number(lastPurchase.teamId))?.name || "Squadra Sconosciuta"}
-                        </p>
-                    </PlayerCard>
-                )}
-            </div>
-
-            {/* ==========================================
-          COLONNA DESTRA: I Budget (25% dello spazio) 
-          ========================================== */}
-            <div style={{
-                flex: '1', backgroundColor: '#2f3542', color: 'white',
-                padding: '20px', overflowY: 'auto', borderLeft: '5px solid #ff4757'
-            }}>
-                <h3 style={{ textAlign: 'center', borderBottom: '2px solid #57606f', paddingBottom: '15px', marginBottom: '20px' }}>
-                    💰 Budget Squadre
-                </h3>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    {/* Ordiniamo le squadre per budget decrescente prima di stamparle */}
-                    {[...teams].sort((a, b) => b.remaining_budget - a.remaining_budget).map(team => (
-                        <div key={team.id} style={{
-                            backgroundColor: '#57606f', padding: '15px', borderRadius: '8px',
-                            display: 'flex', flexDirection: 'column' /* Cambiato in column */
-                        }}>
-
-                            {/* Riga Superiore: Nome e Budget */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                <div>
-                                    <strong style={{ fontSize: '18px', display: 'block' }}>{team.name}</strong>
-                                    <span style={{ fontSize: '12px', color: '#ced6e0' }}>{team.owner_name}</span>
-                                </div>
-                                <div style={{
-                                    backgroundColor: team.remaining_budget < 50 ? '#ff4757' : '#2ed573',
-                                    padding: '8px 12px', borderRadius: '5px', fontWeight: 'bold', fontSize: '20px'
-                                }}>
-                                    {team.remaining_budget}
-                                </div>
-                            </div>
-
-                            {/* 🌟 Riga Inferiore: Riepilogo Rose (P, D, C, A) */}
-                            <div style={{
-                                display: 'flex', justifyContent: 'space-between',
-                                fontSize: '13px', color: '#f1f2f6', backgroundColor: '#2f3542',
-                                padding: '5px 10px', borderRadius: '4px'
-                            }}>
-                                <span style={{ color: getRoleCount(team.id, 'P') >= 3 ? '#ff4757' : 'inherit' }}>
-                                    P: <b>{getRoleCount(team.id, 'P')}</b>/3
-                                </span>
-                                <span style={{ color: getRoleCount(team.id, 'D') >= 8 ? '#ff4757' : 'inherit' }}>
-                                    D: <b>{getRoleCount(team.id, 'D')}</b>/8
-                                </span>
-                                <span style={{ color: getRoleCount(team.id, 'C') >= 8 ? '#ff4757' : 'inherit' }}>
-                                    C: <b>{getRoleCount(team.id, 'C')}</b>/8
-                                </span>
-                                <span style={{ color: getRoleCount(team.id, 'A') >= 6 ? '#ff4757' : 'inherit' }}>
-                                    A: <b>{getRoleCount(team.id, 'A')}</b>/6
-                                </span>
-                            </div>
-
-                        </div>
-                    ))}
-                </div>
-            </div>
-
+  return (
+    <div style={{ padding: '20px', fontFamily: 'Arial', maxWidth: '800px', margin: '0 auto' }}>
+      
+      {/* HEADER PARTECIPANTE */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', backgroundColor: '#2f3542', color: 'white', padding: '15px 20px', borderRadius: '10px' }}>
+        <div>
+          <h2 style={{ margin: 0, color: '#7bed9f' }}>{myTeam?.name}</h2>
+          <p style={{ margin: '5px 0 0 0', fontSize: '14px', opacity: 0.8 }}>Manager: {myTeam?.owner_name}</p>
         </div>
-    );
+        <button 
+          onClick={handleLogout}
+          style={{ backgroundColor: '#ff4757', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
+        >
+          Esci
+        </button>
+      </div>
+
+      {/* STATO: NESSUNA ASTA IN CORSO */}
+      {!activeAuction && !lastPurchase && (
+        <div style={{ padding: '40px', backgroundColor: '#ffffff', borderRadius: '10px', color: '#747d8c', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', textAlign: 'center' }}>
+          <h2>In attesa dell'Admin...</h2>
+          <p>L'asta inizierà a breve. Tieni d'occhio questa schermata!</p>
+        </div>
+      )}
+
+      {/* STATO: ASTA IN CORSO */}
+      {activeAuction && (
+        <PlayerCard 
+          player={{...activeAuction.player, current_price: activeAuction.highestBid}} 
+          title="🔨 ASTA IN CORSO"
+          bgColor="#1e90ff" // Blu per i partecipanti
+          textColor="white"
+        >
+          {/* Box Miglior Offerta Corrente */}
+          <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
+            <h3 style={{ margin: 0, color: '#7bed9f' }}>
+              👑 Offerta Attuale: {activeAuction.highestBid} crediti
+            </h3>
+            <p style={{ margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold' }}>
+              {activeAuction.highestBidderName ? `di ${activeAuction.highestBidderName}` : 'Fai la prima offerta!'}
+            </p>
+          </div>
+
+          {/* LA NOSTRA PALETTA PER LE OFFERTE */}
+          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', color: '#2f3542' }}>
+            <h3 style={{ margin: '0 0 10px 0' }}>Fai la tua offerta:</h3>
+            
+            {/* Passiamo il prezzo attuale al BidPanel per fargli calcolare i +1, +5, ecc. */}
+            <BidPanel 
+              currentBid={activeAuction.highestBid} 
+              onBid={handleBid}
+              disabled={false} 
+            />
+          </div>
+
+          {/* Log per trasparenza */}
+          <AuctionLog history={activeAuction.history} />
+          
+        </PlayerCard>
+      )}
+
+      {/* STATO: ULTIMO ACQUISTO (Mostrato tra un'asta e l'altra) */}
+      {lastPurchase && !activeAuction && (
+        <PlayerCard 
+          player={{
+            name: lastPurchase.playerName,
+            role: lastPurchase.playerRole || '?',
+            club: 'Venduto',
+            purchase_price: lastPurchase.price
+          }}
+          title="🎉 VENDUTO!"
+          bgColor="#ffb142" // Arancione per i venduti
+          textColor="#2c2c54"
+        >
+          <p style={{ fontSize: '20px', margin: '0' }}>Acquistato da:</p>
+          <p style={{ fontSize: '28px', fontWeight: 'bold', margin: '10px 0' }}>
+            {lastPurchase.teamId === myTeam?.id ? '✨ TE STESSO ✨' : "Una squadra avversaria"}
+          </p>
+        </PlayerCard>
+      )}
+
+    </div>
+  );
 }

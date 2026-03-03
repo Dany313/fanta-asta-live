@@ -5,129 +5,139 @@ import { useNavigate } from 'react-router-dom';
 import CustomButton from '../../components/CustomButton';
 import PlayerTable from '../../components/PlayerTable';
 import PlayerCard from '../../components/PlayerCard';
+import BidPanel from '../../components/BidPanel'; // 🌟 IMPORTATO
+import AuctionLog from '../../components/AuctionLog'; // 🌟 IMPORTATO
+
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 
-// 1. Creiamo la connessione WebSocket al nostro backend.
-// La mettiamo fuori dal componente così non viene ricreata a ogni aggiornamento della pagina.
 const socket = io('http://localhost:3000');
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
 
-    // --- STATO (Le variabili del componente) ---
-    const [players, setPlayers] = useState([]); // Il listone
-    const [loading, setLoading] = useState(true); // Flag di caricamento
-    const [activePlayer, setActivePlayer] = useState(null); // Il giocatore attualmente all'asta
+    // --- STATO ---
+    const [players, setPlayers] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [teams, setTeams] = useState([]);
-    const [selectedTeam, setSelectedTeam] = useState('');
-    const [sellPrice, setSellPrice] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState('');
 
+    // 🌟 NUOVO STATO DELL'ASTA (Sostituisce activePlayer e sellPrice)
+    const [activeAuction, setActiveAuction] = useState(null);
+    const [adminSelectedTeam, setAdminSelectedTeam] = useState('');
+
     const handleLogout = () => {
-        // Strappiamo il braccialetto VIP!
         localStorage.removeItem('adminToken');
-        // Lo mandiamo via
         navigate('/login');
     };
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // 1. Recuperiamo il braccialetto VIP dal localStorage
                 const token = localStorage.getItem('adminToken');
-
-                // 2. Lo mettiamo nell'header della chiamata per i giocatori
                 const resPlayers = await axios.get('http://localhost:3000/api/players', {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
+                    headers: { Authorization: `Bearer ${token}` }
                 });
                 setPlayers(resPlayers.data);
 
-                // La chiamata per i team per ora la lasciamo "libera" (non l'abbiamo protetta)
                 const resTeams = await axios.get('http://localhost:3000/api/teams');
                 setTeams(resTeams.data);
 
                 setLoading(false);
             } catch (error) {
-                console.error("Errore nel caricamento dati. Forse il token è scaduto?", error);
-                // Se c'è un errore di autorizzazione, potremmo forzare il logout
-                if (error.response && error.response.status === 401) {
-                    handleLogout();
-                }
+                console.error("Errore nel caricamento", error);
+                if (error.response && error.response.status === 401) handleLogout();
             }
         };
 
         fetchData();
 
-        // Ascoltiamo se l'assegnazione è andata a buon fine
+        // --- ASCOLTATORI SOCKET ---
+        
+        // 1. L'asta parte
+        socket.on('auction_started', (data) => {
+            setActiveAuction(data);
+            setAdminSelectedTeam(''); // Reset tendina
+        });
+
+        // 2. Qualcuno fa un'offerta
+        socket.on('auction_update', (update) => {
+            setActiveAuction(prev => ({
+                ...prev,
+                highestBid: update.highestBid,
+                highestBidderName: update.highestBidderName,
+                history: update.history
+            }));
+        });
+
+        // 3. Assegnazione completata
         socket.on('player_assigned', (response) => {
             if (response.success) {
-                // alert("✅ Assegnazione completata!"); // Puoi anche togliere l'alert se diventa noioso!
-
-                setActivePlayer(null); // Togliamo il giocatore dall'asta attiva
-                setSellPrice(1); // Resettiamo il prezzo
-
-                // 🌟 1. RIMUOVIAMO IL GIOCATORE DAL LISTONE
-                // Diciamo a React: "Prendi i giocatori attuali e tieni solo quelli che NON hanno l'ID appena venduto"
-                setPlayers((prevPlayers) =>
-                    prevPlayers.filter(player => player.id !== response.data.playerId)
-                );
-
-                // 🌟 2. AGGIORNIAMO IL BUDGET DELLA SQUADRA
-                // Diciamo a React: "Trova la squadra che ha comprato e scalagli i crediti"
-                setTeams((prevTeams) =>
-                    prevTeams.map(team =>
-                        // Attenzione a convertire teamId in numero se arriva come stringa dal select!
-                        team.id === Number(response.data.teamId)
-                            ? { ...team, remaining_budget: team.remaining_budget - response.data.price }
-                            : team
-                    )
-                );
-
+                setActiveAuction(null); // Chiudiamo il box dell'asta
+                
+                // Manteniamo la tua ottima logica di aggiornamento stato locale
+                setPlayers((prev) => prev.filter(p => p.id !== response.data.playerId));
+                setTeams((prev) => prev.map(t => 
+                    t.id === Number(response.data.teamId)
+                        ? { ...t, remaining_budget: t.remaining_budget - response.data.price }
+                        : t
+                ));
             } else {
                 alert("❌ Errore: " + response.message);
             }
         });
 
-        return () => socket.off('player_assigned');
+        // 4. Gestione Errori
+        socket.on('bid_error', (error) => alert(`⚠️ ${error.message}`));
+        socket.on('assign_error', (error) => alert(`❌ ${error.message}`));
+
+        return () => {
+            socket.off('auction_started');
+            socket.off('auction_update');
+            socket.off('player_assigned');
+            socket.off('bid_error');
+            socket.off('assign_error');
+        };
     }, []);
 
-    // --- LOGICA (I metodi del componente) ---
+    // --- LOGICA ---
     const handleStartAuction = (player) => {
-        // 1. Salviamo il giocatore nello stato locale per mostrarlo in alto
-        setActivePlayer(player);
-
-        // 2. Usiamo Socket.io per "gridare" al server che l'asta è iniziata
         socket.emit('start_auction', player);
-
-        // Un piccolo feedback visivo per l'admin (puoi anche toglierlo in futuro)
-        console.log(`Segnale inviato al server: Asta per ${player.name}`);
     };
 
-    const handleAssign = () => {
-        if (!selectedTeam) return alert("Seleziona una squadra!");
-        if (sellPrice < 1) return alert("Il prezzo deve essere almeno 1!");
-
-        socket.emit('assign_player', {
-            playerId: activePlayer.id,
-            teamId: selectedTeam,
-            price: sellPrice,
-            playerName: activePlayer.name,
-            playerRole: activePlayer.role // 🌟 NUOVO: Passiamo anche il ruolo!
+    // 🌟 NUOVO: Funzione per l'Admin per piazzare una puntata manuale
+    const handleAdminBid = (amount) => {
+        if (!adminSelectedTeam) {
+            alert("Seleziona prima una squadra per registrare l'offerta!");
+            return;
+        }
+        const teamName = teams.find(t => t.id === Number(adminSelectedTeam))?.name;
+        socket.emit('place_bid', {
+            teamId: Number(adminSelectedTeam),
+            teamName: teamName,
+            amount: amount
         });
     };
 
-    // React ricalcolerà questa lista in automatico ogni volta che l'utente digita una lettera!
+    // 🌟 AGGIORNATO: L'assegnazione ora non ha bisogno di inviare dati
+    const handleAssign = () => {
+        if (!activeAuction || !activeAuction.highestBidderId) {
+            alert("Nessuna offerta ricevuta! L'asta non può essere conclusa.");
+            return;
+        }
+        if (window.confirm(`Vuoi davvero vendere ${activeAuction.player.name} a ${activeAuction.highestBidderName} per ${activeAuction.highestBid} crediti?`)) {
+            socket.emit('assign_player');
+        }
+    };
+
+    // Filtri (Mantenuti identici)
     const filteredPlayers = players.filter(player => {
         const nameMatch = player.name.toLowerCase().includes(searchTerm.toLowerCase());
         const roleMatch = !roleFilter || player.role.toUpperCase() === roleFilter.toUpperCase();
         return nameMatch && roleMatch;
     });
 
-    // --- TEMPLATE (L'equivalente dell'HTML) ---
     return (
         <div style={{ padding: '20px', fontFamily: 'Arial' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -135,50 +145,55 @@ export default function AdminDashboard() {
                 <CustomButton variant="danger" onClick={handleLogout}>🚪 Disconnetti</CustomButton>
             </div>
 
-            {/* SEZIONE 1: Il giocatore attualmente all'asta */}
-            {/* (Viene mostrato solo se activePlayer non è null) */}
             {/* --- SEZIONE ASTA IN CORSO --- */}
-            {activePlayer && (
+            {activeAuction?.player && (
                 <div style={{ marginBottom: '40px' }}>
                     <PlayerCard
-                        player={activePlayer}
-                        bgColor="#f1c40f" // Giallo Admin
+                        player={{...activeAuction.player, current_price: activeAuction.highestBid}}
+                        bgColor="#f1c40f" 
                         textColor="#2f3542"
+                        title="🔨 ASTA IN CORSO"
                     >
-                        {/* Questi elementi diventano i "children" di PlayerCard */}
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                        {/* Box Miglior Offerta */}
+                        <div style={{ backgroundColor: 'white', padding: '15px', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+                            <h3 style={{ margin: 0, color: '#e67e22' }}>👑 Offerta Attuale: {activeAuction.highestBid} crediti</h3>
+                            <p style={{ margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold' }}>
+                                {activeAuction.highestBidderName ? `di ${activeAuction.highestBidderName}` : 'Nessuna offerta...'}
+                            </p>
+                        </div>
+
+                        {/* Pannello Offerte Admin */}
+                        <div style={{ border: '2px dashed rgba(0,0,0,0.2)', padding: '15px', borderRadius: '10px', marginBottom: '20px' }}>
+                            <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>Registra offerta manuale:</p>
                             <select
-                                value={selectedTeam}
-                                onChange={(e) => setSelectedTeam(e.target.value)}
-                                style={{ padding: '10px', fontSize: '16px', borderRadius: '5px' }}
+                                value={adminSelectedTeam}
+                                onChange={(e) => setAdminSelectedTeam(e.target.value)}
+                                style={{ padding: '10px', fontSize: '16px', borderRadius: '5px', width: '100%', marginBottom: '10px' }}
                             >
-                                <option value="">-- Seleziona Squadra --</option>
+                                <option value="">-- Seleziona la Squadra --</option>
                                 {teams.map(t => (
                                     <option key={t.id} value={t.id}>{t.name} ({t.remaining_budget} cr)</option>
                                 ))}
                             </select>
 
-                            <input
-                                type="number"
-                                value={sellPrice}
-                                onChange={(e) => setSellPrice(Number(e.target.value))}
-                                style={{ padding: '10px', fontSize: '16px', width: '100px', borderRadius: '5px' }}
-                                min="1"
+                            <BidPanel 
+                                currentBid={activeAuction.highestBid} 
+                                onBid={handleAdminBid}
+                                disabled={!adminSelectedTeam} 
                             />
-
-                            <CustomButton variant="primary" onClick={handleAssign}>
-                                ✅ Conferma
-                            </CustomButton>
                         </div>
+
+                        <CustomButton variant="primary" onClick={handleAssign} style={{ width: '100%', fontSize: '20px', padding: '15px', marginTop: '10px' }}>
+                            🎉 VENDUTO A {activeAuction.highestBid} CR!
+                        </CustomButton>
+
+                        <AuctionLog history={activeAuction.history} />
                     </PlayerCard>
                 </div>
             )}
 
-            {/* SEZIONE: Link di Invito per i Viewer */}
-            <div style={{
-                backgroundColor: '#fff', padding: '15px', borderRadius: '8px',
-                border: '1px solid #ddd', marginBottom: '30px'
-            }}>
+            {/* --- SEZIONE LINK INVITO --- */}
+            <div style={{ backgroundColor: '#fff', padding: '15px', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '30px' }}>
                 <h3 style={{ margin: '0 0 15px 0' }}>🔗 Invia i link ai partecipanti</h3>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                     {teams.map(team => (
@@ -186,44 +201,33 @@ export default function AdminDashboard() {
                             backgroundColor: '#f1f2f6', padding: '10px', borderRadius: '5px',
                             display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px'
                         }}>
-                            <div key={team.id} style={{
-                                backgroundColor: '#f1f2f6', padding: '10px', borderRadius: '5px',
-                                display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px'
-                            }}>
-                                <strong>{team.name}</strong>
-                                <button
-                                    onClick={() => {
-                                        const link = `http://localhost:5173/join/${team.invite_token}`;
-                                        navigator.clipboard.writeText(link);
-                                        alert(`Copiato!`);
-                                    }}
-                                    style={{ backgroundColor: '#7bed9f', border: 'none', padding: '5px 10px', borderRadius: '3px', cursor: 'pointer' }}
-                                >
-                                    Copia Link
-                                </button>
-
-                                {/* 🌟 NUOVO BOTTONE KICK */}
-                                <button
-                                    onClick={() => {
-                                        if (window.confirm(`Vuoi davvero disconnettere ${team.name}?`)) {
-                                            socket.emit('kick_team', team.id);
-                                        }
-                                    }}
-                                    style={{ backgroundColor: '#ff4757', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '3px', cursor: 'pointer' }}
-                                >
-                                    Scollega
-                                </button>
-                            </div>
+                            <strong>{team.name}</strong>
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(`http://localhost:5173/join/${team.invite_token}`);
+                                    alert(`Copiato!`);
+                                }}
+                                style={{ backgroundColor: '#7bed9f', border: 'none', padding: '5px 10px', borderRadius: '3px', cursor: 'pointer' }}
+                            >
+                                Copia Link
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (window.confirm(`Vuoi davvero disconnettere ${team.name}?`)) socket.emit('kick_team', team.id);
+                                }}
+                                style={{ backgroundColor: '#ff4757', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '3px', cursor: 'pointer' }}
+                            >
+                                Scollega
+                            </button>
                         </div>
                     ))}
                 </div>
             </div>
 
-            {/* SEZIONE 2: La lista dei giocatori da mettere all'asta */}
+            {/* --- SEZIONE LISTONE --- */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                 <h3>Listone Giocatori ({filteredPlayers.length} disponibili)</h3>
 
-                {/* FILTRO PER RUOLO */}
                 <ButtonGroup aria-label="Basic button group">
                     <Button onClick={() => setRoleFilter('')} variant={!roleFilter ? 'contained' : 'outlined'}>Tutti</Button>
                     <Button onClick={() => setRoleFilter('P')} variant={roleFilter === 'P' ? 'contained' : 'outlined'}>P</Button>
@@ -232,7 +236,6 @@ export default function AdminDashboard() {
                     <Button onClick={() => setRoleFilter('A')} variant={roleFilter === 'A' ? 'contained' : 'outlined'}>A</Button>
                 </ButtonGroup>
 
-                {/* LA NOSTRA BARRA DI RICERCA */}
                 <input
                     type="text"
                     placeholder="🔍 Cerca giocatore..."
@@ -246,7 +249,7 @@ export default function AdminDashboard() {
                 <p>Caricamento in corso...</p>
             ) : (
                 <PlayerTable
-                    players={filteredPlayers}
+                    players={filteredPlayers.slice(0, 100)} // Ho messo un limite a 100 per sicurezza di performance, ma puoi toglierlo
                     onPlayerClick={handleStartAuction}
                     buttonText="Metti all'asta"
                     buttonVariant="success"

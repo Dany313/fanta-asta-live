@@ -17,6 +17,7 @@ export default function JoinViewer() {
           localStorage.setItem('viewerToken', response.data.token);
           localStorage.setItem('viewerTeamId', response.data.team.id);
           localStorage.setItem('viewerTeamName', response.data.team.name);
+          localStorage.setItem('teamData', JSON.stringify(response.data.team)); // 🌟 IMPORTANTE
           
           // Entriamo nel tabellone!
           navigate('/viewer');
