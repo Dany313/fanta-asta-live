@@ -1,5 +1,5 @@
 // Importiamo il pool di connessione che abbiamo appena creato
-const db = require('./db');
+const db = require('../config/db');
 
 // Creiamo una funzione asincrona
 async function test_connection() {
