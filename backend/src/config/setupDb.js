@@ -34,8 +34,8 @@ const initializeDatabase = async () => {
       CREATE TABLE IF NOT EXISTS teams (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) UNIQUE NOT NULL,
-        owner_name VARCHAR(255),
         remaining_budget INTEGER DEFAULT 500,
+        max_possible_bid INTEGER DEFAULT 475,
         invite_token UUID DEFAULT gen_random_uuid()
       );
     `);
@@ -55,10 +55,10 @@ const initializeDatabase = async () => {
     if (parseInt(checkTeams.rows[0].count) === 0) {
       console.log("🌱 Database vuoto: Inserimento delle squadre di base...");
       await db.query(`
-        INSERT INTO teams (name, owner_name, remaining_budget) VALUES 
-        ('Real Madrid', 'Carlo', 500),
-        ('Manchester City', 'Pep', 500),
-        ('Juventus', 'Thiago', 500)
+        INSERT INTO teams (name, remaining_budget) VALUES 
+        ('Carlo', 500),
+        ('Pep', 500),
+        ('Thiago', 500)
       `);
     }
 

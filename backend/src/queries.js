@@ -9,7 +9,7 @@ const getRostersQuery = `
       FROM rosters r JOIN players p ON r.player_id = p.id
     `;
 const getTeamsQuery = `SELECT * FROM teams ORDER BY name ASC`;
-const verifyTokenQuery = `SELECT id, name, owner_name FROM teams WHERE invite_token = $1`;
+const verifyTokenQuery = `SELECT id, name FROM teams WHERE invite_token = $1`;
 
 module.exports = {
   getPlayersQuery,

@@ -97,8 +97,7 @@ export default function ViewerBoard() {
       {/* HEADER PARTECIPANTE */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', backgroundColor: '#2f3542', color: 'white', padding: '15px 20px', borderRadius: '10px' }}>
         <div>
-          <h2 style={{ margin: 0, color: '#7bed9f' }}>{myTeam?.name}</h2>
-          <p style={{ margin: '5px 0 0 0', fontSize: '14px', opacity: 0.8 }}>Manager: {myTeam?.owner_name}</p>
+          <p style={{ margin: '5px 0 0 0', fontSize: '14px', opacity: 0.8 }}>Manager: {myTeam?.name}</p>
         </div>
         <button 
           onClick={handleLogout}

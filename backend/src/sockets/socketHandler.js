@@ -8,7 +8,8 @@ let activeAuction = {
   highestBidderId: null,
   highestBidderName: null,
   history: [], // Il log delle puntate: { teamName, amount, time }
-  teamBudgets: {} // Es: { '1': 500, '2': 350 } - Per validazioni istantanee
+  teamBudgets: {}, // Es: { '1': 500, '2': 350 } - Per validazioni istantanee
+  maxPossibleBids: {} // Es: { '1': 500, '2': 350 } - Per validazioni istantanee
 };
 
 module.exports = (io) => {
@@ -25,14 +26,20 @@ module.exports = (io) => {
           budgets[t.id] = t.remaining_budget;
         });
 
+        const maxBids = {};
+        teamsQuery.rows.forEach(t => {
+          maxBids[t.id] = t.max_possible_bid;
+        });
+
         // Resettiamo lo stato in memoria per il nuovo giocatore
         activeAuction = {
           player: playerData,
-          highestBid: playerData.initial_price || 1, // Partiamo dalla base d'asta
+          highestBid: 0, // Partiamo dalla base d'asta
           highestBidderId: null,
           highestBidderName: null,
           history: [],
-          teamBudgets: budgets
+          teamBudgets: budgets,
+          maxPossibleBids: maxBids
         };
 
         // Avvisiamo tutti che l'asta è iniziata, passando lo stato iniziale!
@@ -61,6 +68,10 @@ module.exports = (io) => {
 
       // C. Controllo Budget in memoria (istantaneo, nessuna attesa del DB!)
       const maxBudget = activeAuction.teamBudgets[bidData.teamId] || 0;
+      const maxPossibleBid = activeAuction.maxPossibleBids[bidData.teamId] || 500;
+      if (bidData.amount > maxPossibleBid) {
+        return socket.emit('bid_error', { message: `L'offerta supera il limite massimo possibile! (Max: ${maxPossibleBid})` });
+      }
       if (bidData.amount > maxBudget) {
         return socket.emit('bid_error', { message: `Non hai abbastanza crediti! (Max: ${maxBudget})` });
       }
@@ -84,7 +95,7 @@ module.exports = (io) => {
         highestBidderName: activeAuction.highestBidderName,
         history: activeAuction.history
       });
-      
+
       console.log(`💰 ${bidData.teamName} rilancia a ${bidData.amount} per ${activeAuction.player.name}`);
     });
 
@@ -114,36 +125,42 @@ module.exports = (io) => {
         }
 
         // Il controllo del budget base (1 credito per slot mancante)
-        const emptySlotsAfterPurchase = 25 - (currentRoster.length + 1); 
-        const minimumRequiredBudget = emptySlotsAfterPurchase * 1; 
+        const emptySlotsAfterPurchase = 25 - (currentRoster.length + 1);
+        const minimumRequiredBudget = emptySlotsAfterPurchase * 1;
         const currentBudgetDB = activeAuction.teamBudgets[winnerId];
 
         if ((currentBudgetDB - finalPrice) < minimumRequiredBudget) {
           return socket.emit('assign_error', { message: `Budget insufficiente per completare la rosa!` });
         }
 
+        const newMaxPossibleBid = activeAuction.maxPossibleBids[winnerId] - finalPrice - 1;
+
         // --- TRANSAZIONE DB ---
         await db.query('BEGIN');
         await db.query(
-          `INSERT INTO rosters (team_id, player_id, purchase_price) VALUES ($1, $2, $3)`, 
+          `INSERT INTO rosters (team_id, player_id, purchase_price) VALUES ($1, $2, $3)`,
           [winnerId, player.id, finalPrice]
         );
         await db.query(
-          `UPDATE teams SET remaining_budget = remaining_budget - $1 WHERE id = $2`, 
+          `UPDATE teams SET remaining_budget = remaining_budget - $1 WHERE id = $2`,
           [finalPrice, winnerId]
+        );
+        await db.query(
+          `UPDATE teams SET max_possible_bid = $1 WHERE id = $2`,
+          [newMaxPossibleBid, winnerId]
         );
         await db.query('COMMIT');
 
         // Avvisiamo tutti e svuotiamo l'asta in RAM
-        io.emit('player_assigned', { 
-          success: true, 
-          data: { 
-            playerId: player.id, 
-            playerName: player.name, 
+        io.emit('player_assigned', {
+          success: true,
+          data: {
+            playerId: player.id,
+            playerName: player.name,
             playerRole: player.role,
-            teamId: winnerId, 
-            price: finalPrice 
-          } 
+            teamId: winnerId,
+            price: finalPrice
+          }
         });
 
         // Resettiamo l'asta
