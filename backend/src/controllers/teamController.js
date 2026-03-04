@@ -1,10 +1,14 @@
 const db = require('../config/db');
 const queries = require('../queries');
+const TeamMapper = require('../mappers/TeamMapper');
 
 exports.getTeams = async (req, res) => {
   try {
     const result = await db.query(queries.getTeamsQuery);
-    res.json(result.rows);
+    // 1. Convertiamo le righe DB in Entities
+    // 2. Convertiamo le Entities in DTOs (nascondendo il token)
+    const dtos = result.rows.map(row => TeamMapper.toDto(TeamMapper.toEntity(row)));
+    res.json(dtos);
   } catch (error) {
     res.status(500).json({ error: 'Errore interno' });
   }
@@ -15,7 +19,10 @@ exports.verifyToken = async (req, res) => {
     const { token } = req.params;
     const result = await db.query(queries.verifyTokenQuery, [token]);
     if (result.rows.length === 0) return res.status(404).json({ success: false, message: 'Link non valido.' });
-    res.json({ success: true, team: result.rows[0], token });
+    
+    // Qui restituiamo l'entity completa (o quasi) perché è il login della squadra stessa
+    const teamEntity = TeamMapper.toEntity(result.rows[0]);
+    res.json({ success: true, team: teamEntity, token });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Errore interno' });
   }
