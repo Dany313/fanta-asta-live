@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
 
 import PlayerCard from '../../components/PlayerCard';
-import BidPanel from '../../components/BidPanel';
+import BidPanel from '../../components/bidPanel';
 import AuctionLog from '../../components/AuctionLog';
 
 const socket = io('http://localhost:3000');
@@ -64,6 +64,9 @@ export default function ViewerBoard() {
       }
     });
 
+    // 5. Richiediamo lo stato attuale dell'asta (Sync)
+    socket.emit('sync_auction');
+
     return () => {
       socket.off('auction_started');
       socket.off('auction_update');
@@ -76,7 +79,7 @@ export default function ViewerBoard() {
   // --- LOGICA ---
   const handleBid = (amount) => {
     if (!myTeam) return;
-    
+
     // Inviamo la nostra puntata al server!
     socket.emit('place_bid', {
       teamId: myTeam.id,
@@ -93,13 +96,13 @@ export default function ViewerBoard() {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial', maxWidth: '800px', margin: '0 auto' }}>
-      
+
       {/* HEADER PARTECIPANTE */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', backgroundColor: '#2f3542', color: 'white', padding: '15px 20px', borderRadius: '10px' }}>
         <div>
           <p style={{ margin: '5px 0 0 0', fontSize: '14px', opacity: 0.8 }}>Manager: {myTeam?.name}</p>
         </div>
-        <button 
+        <button
           onClick={handleLogout}
           style={{ backgroundColor: '#ff4757', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
         >
@@ -117,8 +120,8 @@ export default function ViewerBoard() {
 
       {/* STATO: ASTA IN CORSO */}
       {activeAuction && (
-        <PlayerCard 
-          player={{...activeAuction.player, current_price: activeAuction.highestBid}} 
+        <PlayerCard
+          player={{ ...activeAuction.player, current_price: activeAuction.highestBid }}
           title="🔨 ASTA IN CORSO"
           bgColor="#1e90ff" // Blu per i partecipanti
           textColor="white"
@@ -136,24 +139,24 @@ export default function ViewerBoard() {
           {/* LA NOSTRA PALETTA PER LE OFFERTE */}
           <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', color: '#2f3542' }}>
             <h3 style={{ margin: '0 0 10px 0' }}>Fai la tua offerta:</h3>
-            
+
             {/* Passiamo il prezzo attuale al BidPanel per fargli calcolare i +1, +5, ecc. */}
-            <BidPanel 
-              currentBid={activeAuction.highestBid} 
+            <BidPanel
+              currentBid={activeAuction.highestBid}
               onBid={handleBid}
-              disabled={false} 
+              disabled={false}
             />
           </div>
 
           {/* Log per trasparenza */}
           <AuctionLog history={activeAuction.history} />
-          
+
         </PlayerCard>
       )}
 
       {/* STATO: ULTIMO ACQUISTO (Mostrato tra un'asta e l'altra) */}
       {lastPurchase && !activeAuction && (
-        <PlayerCard 
+        <PlayerCard
           player={{
             name: lastPurchase.playerName,
             role: lastPurchase.playerRole || '?',

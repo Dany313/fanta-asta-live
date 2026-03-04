@@ -19,7 +19,7 @@ export default function AuctionLog({ history }) {
             fontWeight: index === 0 ? 'bold' : 'normal'
           }}>
             <span>{log.teamName}</span>
-            <span>{log.amount} cr <small style={{ color: '#999', fontWeight: 'normal' }}>({log.time})</small></span>
+            <span>{log.amount} FM <small style={{ color: '#999', fontWeight: 'normal' }}>({log.time})</small></span>
           </li>
         ))}
       </ul>

@@ -4,7 +4,7 @@ class TeamResponseDto {
     this.name = teamEntity.name;
     this.remainingBudget = teamEntity.remainingBudget;
     this.maxPossibleBid = teamEntity.maxPossibleBid;
-    // NON includiamo inviteToken qui per sicurezza
+    this.inviteToken = teamEntity.inviteToken; // 🌟 IMPORTANTE: serve per il link di invito!
   }
 }
 

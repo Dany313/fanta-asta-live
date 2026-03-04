@@ -6,6 +6,20 @@ const { activeAuction, resetAuction } = require('./auctionState');
 
 module.exports = (io, socket) => {
   
+  // 0. SYNC STATO INIZIALE (Se un client si connette ad asta in corso)
+  socket.on('sync_auction', () => {
+    if (activeAuction.player) {
+      const stateDto = new AuctionStateDto(
+        activeAuction.player, 
+        activeAuction.highestBid, 
+        activeAuction.highestBidderName, 
+        activeAuction.history
+      );
+      // Inviamo lo stato SOLO al client che ha richiesto la sync
+      socket.emit('auction_started', stateDto);
+    }
+  });
+
   // 1. INIZIO ASTA
   socket.on('start_auction', async (playerData) => {
     try {

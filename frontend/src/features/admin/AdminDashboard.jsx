@@ -5,11 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import CustomButton from '../../components/CustomButton';
 import PlayerTable from '../../components/PlayerTable';
 import PlayerCard from '../../components/PlayerCard';
-import BidPanel from '../../components/BidPanel'; // 🌟 IMPORTATO
+import BidPanel from '../../components/bidPanel'; // 🌟 IMPORTATO
 import AuctionLog from '../../components/AuctionLog'; // 🌟 IMPORTATO
 
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import InvitePanel from '../../components/InvitePanel'; // 🌟 IMPORTATO
 
 const socket = io('http://localhost:3000');
 
@@ -54,7 +55,7 @@ export default function AdminDashboard() {
         fetchData();
 
         // --- ASCOLTATORI SOCKET ---
-        
+
         // 1. L'asta parte
         socket.on('auction_started', (data) => {
             setActiveAuction(data);
@@ -75,10 +76,10 @@ export default function AdminDashboard() {
         socket.on('player_assigned', (response) => {
             if (response.success) {
                 setActiveAuction(null); // Chiudiamo il box dell'asta
-                
+
                 // Manteniamo la tua ottima logica di aggiornamento stato locale
                 setPlayers((prev) => prev.filter(p => p.id !== response.data.playerId));
-                setTeams((prev) => prev.map(t => 
+                setTeams((prev) => prev.map(t =>
                     t.id === Number(response.data.teamId)
                         ? { ...t, remaining_budget: t.remaining_budget - response.data.price }
                         : t
@@ -91,6 +92,9 @@ export default function AdminDashboard() {
         // 4. Gestione Errori
         socket.on('bid_error', (error) => alert(`⚠️ ${error.message}`));
         socket.on('assign_error', (error) => alert(`❌ ${error.message}`));
+
+        // 5. Richiediamo lo stato attuale dell'asta (Sync)
+        socket.emit('sync_auction');
 
         return () => {
             socket.off('auction_started');
@@ -122,10 +126,10 @@ export default function AdminDashboard() {
 
     // 🌟 AGGIORNATO: L'assegnazione ora non ha bisogno di inviare dati
     const handleAssign = () => {
-        if (!activeAuction || !activeAuction.highestBidderId) {
-            alert("Nessuna offerta ricevuta! L'asta non può essere conclusa.");
-            return;
-        }
+        // if (!activeAuction || !activeAuction.highestBidderId) {
+        //     alert("Nessuna offerta ricevuta! L'asta non può essere conclusa.");
+        //     return;
+        // }
         if (window.confirm(`Vuoi davvero vendere ${activeAuction.player.name} a ${activeAuction.highestBidderName} per ${activeAuction.highestBid} crediti?`)) {
             socket.emit('assign_player');
         }
@@ -145,12 +149,13 @@ export default function AdminDashboard() {
                 <CustomButton variant="danger" onClick={handleLogout}>🚪 Disconnetti</CustomButton>
             </div>
 
+
             {/* --- SEZIONE ASTA IN CORSO --- */}
             {activeAuction?.player && (
                 <div style={{ marginBottom: '40px' }}>
                     <PlayerCard
-                        player={{...activeAuction.player, current_price: activeAuction.highestBid}}
-                        bgColor="#f1c40f" 
+                        player={{ ...activeAuction.player, current_price: activeAuction.highestBid }}
+                        bgColor="#f1c40f"
                         textColor="#2f3542"
                         title="🔨 ASTA IN CORSO"
                     >
@@ -172,19 +177,19 @@ export default function AdminDashboard() {
                             >
                                 <option value="">-- Seleziona la Squadra --</option>
                                 {teams.map(t => (
-                                    <option key={t.id} value={t.id}>{t.name} ({t.remaining_budget} cr)</option>
+                                    <option key={t.id} value={t.id}>{t.name} ({t.remaining_budget} FM)</option>
                                 ))}
                             </select>
 
-                            <BidPanel 
-                                currentBid={activeAuction.highestBid} 
+                            <BidPanel
+                                currentBid={activeAuction.highestBid}
                                 onBid={handleAdminBid}
-                                disabled={!adminSelectedTeam} 
+                                disabled={!adminSelectedTeam}
                             />
                         </div>
 
                         <CustomButton variant="primary" onClick={handleAssign} style={{ width: '100%', fontSize: '20px', padding: '15px', marginTop: '10px' }}>
-                            🎉 VENDUTO A {activeAuction.highestBid} CR!
+                            🎉 VENDUTO A {activeAuction.highestBid} FM!
                         </CustomButton>
 
                         <AuctionLog history={activeAuction.history} />
@@ -193,35 +198,9 @@ export default function AdminDashboard() {
             )}
 
             {/* --- SEZIONE LINK INVITO --- */}
-            <div style={{ backgroundColor: '#fff', padding: '15px', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '30px' }}>
-                <h3 style={{ margin: '0 0 15px 0' }}>🔗 Invia i link ai partecipanti</h3>
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    {teams.map(team => (
-                        <div key={team.id} style={{
-                            backgroundColor: '#f1f2f6', padding: '10px', borderRadius: '5px',
-                            display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px'
-                        }}>
-                            <strong>{team.name}</strong>
-                            <button
-                                onClick={() => {
-                                    navigator.clipboard.writeText(`http://localhost:5173/join/${team.invite_token}`);
-                                    alert(`Copiato!`);
-                                }}
-                                style={{ backgroundColor: '#7bed9f', border: 'none', padding: '5px 10px', borderRadius: '3px', cursor: 'pointer' }}
-                            >
-                                Copia Link
-                            </button>
-                            <button
-                                onClick={() => {
-                                    if (window.confirm(`Vuoi davvero disconnettere ${team.name}?`)) socket.emit('kick_team', team.id);
-                                }}
-                                style={{ backgroundColor: '#ff4757', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '3px', cursor: 'pointer' }}
-                            >
-                                Scollega
-                            </button>
-                        </div>
-                    ))}
-                </div>
+
+            <div>
+                <InvitePanel teams={teams} />
             </div>
 
             {/* --- SEZIONE LISTONE --- */}
