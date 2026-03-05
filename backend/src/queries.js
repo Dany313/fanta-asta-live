@@ -15,6 +15,9 @@ const createTeamQuery = `INSERT INTO teams (name, league_id) VALUES ($1, $2) RET
 const getLeaguesQuery = `SELECT * FROM leagues`;
 const getTeamsByLeagueQuery = `SELECT * FROM teams WHERE league_id = $1 ORDER BY name ASC`;
 
+const deleteLeagueQuery = `DELETE FROM leagues WHERE id = $1`;
+const updateLeagueQuery = `UPDATE leagues SET name = $1 WHERE id = $2 RETURNING *`;
+
 module.exports = {
   getPlayersQuery,
   getRostersQuery,
@@ -23,5 +26,7 @@ module.exports = {
   verifyTokenQuery,
   createLeagueQuery,
   createTeamQuery,
-  getLeaguesQuery
+  getLeaguesQuery,
+  deleteLeagueQuery,
+  updateLeagueQuery
 };
