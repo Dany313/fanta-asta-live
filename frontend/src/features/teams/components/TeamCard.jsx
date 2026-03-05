@@ -14,12 +14,9 @@ import ModeEditIcon from '@mui/icons-material/ModeEdit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { useNavigate } from 'react-router-dom';
 
-
-const LeagueCard = ({ id, name, onDelete, onUpdate }) => {
+const TeamCard = ({ id, name, onDelete, onUpdate }) => {
     const [anchorEl, setAnchorEl] = React.useState(null);
-    const navigate = useNavigate();
     const open = Boolean(anchorEl);
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
@@ -57,7 +54,7 @@ const LeagueCard = ({ id, name, onDelete, onUpdate }) => {
                 </Stack>
             </CardContent>
             <CardActions>
-                <Button size="small" onClick={() => navigate(`/leagues/${id}`)}>
+                <Button size="small" onClick={() => alert('unimplemented')}>
                     Vai alla lega
                 </Button>
             </CardActions>
@@ -65,4 +62,4 @@ const LeagueCard = ({ id, name, onDelete, onUpdate }) => {
     );
 };
 
-export default LeagueCard;
+export default TeamCard;

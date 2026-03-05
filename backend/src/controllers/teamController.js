@@ -20,12 +20,34 @@ exports.getTeams = async (req, res) => {
   }
 };
 
+exports.updateTeam = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    const result = await db.query(queries.updateTeamQuery, [name, id]);
+    const teamEntity = TeamMapper.toEntity(result.rows[0]);
+    res.json(teamEntity);
+  } catch (error) {
+    res.status(500).json({ error: 'Errore interno' });
+  }
+};
+
+exports.deleteTeam = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query(queries.deleteTeamQuery, [id]);
+    res.json({ message: 'Squadra eliminata con successo' });
+  } catch (error) {
+    res.status(500).json({ error: 'Errore interno' });
+  }
+};
+
 exports.verifyToken = async (req, res) => {
   try {
     const { token } = req.params;
     const result = await db.query(queries.verifyTokenQuery, [token]);
     if (result.rows.length === 0) return res.status(404).json({ success: false, message: 'Link non valido.' });
-    
+
     // Qui restituiamo l'entity completa (o quasi) perché è il login della squadra stessa
     const teamEntity = TeamMapper.toEntity(result.rows[0]);
     res.json({ success: true, team: teamEntity, token });
@@ -41,6 +63,6 @@ exports.createTeam = async (req, res) => {
     const teamEntity = TeamMapper.toEntity(result.rows[0]);
     res.status(201).json(teamEntity);
   } catch (error) {
-    res.status(500).json({ error: 'Errore interno' });
+    res.status(500).json({ error: 'Errore interno', details: error.message });
   }
 }
