@@ -11,6 +11,8 @@ import AuctionLog from '../../components/AuctionLog'; // 🌟 IMPORTATO
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import InvitePanel from '../../components/InvitePanel'; // 🌟 IMPORTATO
+import LeagueManagement from './LeagueManagement';
+import * as api from '../../api';
 
 const socket = io('http://localhost:3000');
 
@@ -23,20 +25,32 @@ export default function AdminDashboard() {
     const [teams, setTeams] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState('');
+    const [setupComplete, setSetupComplete] = useState(false);
 
     // 🌟 NUOVO STATO DELL'ASTA (Sostituisce activePlayer e sellPrice)
     const [activeAuction, setActiveAuction] = useState(null);
-    const [adminSelectedTeam, setAdminSelectedTeam] = useState('');
 
     const handleLogout = () => {
         localStorage.removeItem('adminToken');
         navigate('/login');
     };
 
+    const handleSetupComplete = () => {
+        setSetupComplete(true);
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem('adminToken');
+                const leaguesRes = await api.getLeagues();
+                if (leaguesRes.data.length > 0) {
+                    const teamsRes = await api.getTeams(leaguesRes.data[0].id);
+                    if (teamsRes.data.length > 0) {
+                        setSetupComplete(true);
+                    }
+                }
+
                 const resPlayers = await axios.get('http://localhost:3000/api/players', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -59,7 +73,6 @@ export default function AdminDashboard() {
         // 1. L'asta parte
         socket.on('auction_started', (data) => {
             setActiveAuction(data);
-            setAdminSelectedTeam(''); // Reset tendina
         });
 
         // 2. Qualcuno fa un'offerta
@@ -112,13 +125,14 @@ export default function AdminDashboard() {
 
     // 🌟 NUOVO: Funzione per l'Admin per piazzare una puntata manuale
     const handleAdminBid = (amount) => {
-        if (!adminSelectedTeam) {
+        const adminTeamId = localStorage.getItem('adminTeamId');
+        if (!adminTeamId) {
             alert("Seleziona prima una squadra per registrare l'offerta!");
             return;
         }
-        const teamName = teams.find(t => t.id === Number(adminSelectedTeam))?.name;
+        const teamName = teams.find(t => t.id === Number(adminTeamId))?.name;
         socket.emit('place_bid', {
-            teamId: Number(adminSelectedTeam),
+            teamId: Number(adminTeamId),
             teamName: teamName,
             amount: amount
         });
@@ -141,6 +155,10 @@ export default function AdminDashboard() {
         const roleMatch = !roleFilter || player.role.toUpperCase() === roleFilter.toUpperCase();
         return nameMatch && roleMatch;
     });
+
+    if (!setupComplete) {
+        return <LeagueManagement onSetupComplete={handleSetupComplete} />;
+    }
 
     return (
         <div style={{ padding: '20px', fontFamily: 'Arial' }}>
@@ -170,21 +188,9 @@ export default function AdminDashboard() {
                         {/* Pannello Offerte Admin */}
                         <div style={{ border: '2px dashed rgba(0,0,0,0.2)', padding: '15px', borderRadius: '10px', marginBottom: '20px' }}>
                             <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>Registra offerta manuale:</p>
-                            <select
-                                value={adminSelectedTeam}
-                                onChange={(e) => setAdminSelectedTeam(e.target.value)}
-                                style={{ padding: '10px', fontSize: '16px', borderRadius: '5px', width: '100%', marginBottom: '10px' }}
-                            >
-                                <option value="">-- Seleziona la Squadra --</option>
-                                {teams.map(t => (
-                                    <option key={t.id} value={t.id}>{t.name} ({t.remaining_budget} FM)</option>
-                                ))}
-                            </select>
-
                             <BidPanel
                                 currentBid={activeAuction.highestBid}
                                 onBid={handleAdminBid}
-                                disabled={!adminSelectedTeam}
                             />
                         </div>
 

@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const playerRoutes = require('./routes/playerRoutes');
 const teamRoutes = require('./routes/teamRoutes');
 const rosterRoutes = require('./routes/rosterRoutes');
+const leagueRoutes = require('./routes/leagueRoutes');
 
 const app = express();
 
@@ -25,5 +26,6 @@ app.use('/api', authRoutes); // authRoutes gestisce già /login, quindi diventer
 app.use('/api/players', playerRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/rosters', rosterRoutes);
+app.use('/api/leagues', leagueRoutes);
 
 module.exports = app;

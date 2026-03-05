@@ -10,10 +10,23 @@ const getRostersQuery = `
     `;
 const getTeamsQuery = `SELECT * FROM teams ORDER BY name ASC`;
 const verifyTokenQuery = `SELECT id, name FROM teams WHERE invite_token = $1`;
+const createLeagueQuery = `INSERT INTO leagues (name) VALUES ($1) RETURNING id, name`;
+const createTeamQuery = `INSERT INTO teams (name, league_id) VALUES ($1, $2) RETURNING *`;
+const getLeaguesQuery = `SELECT * FROM leagues`;
+const getTeamsByLeagueQuery = `SELECT * FROM teams WHERE league_id = $1 ORDER BY name ASC`;
+
+const deleteLeagueQuery = `DELETE FROM leagues WHERE id = $1`;
+const updateLeagueQuery = `UPDATE leagues SET name = $1 WHERE id = $2 RETURNING *`;
 
 module.exports = {
   getPlayersQuery,
   getRostersQuery,
   getTeamsQuery,
-  verifyTokenQuery
+  getTeamsByLeagueQuery,
+  verifyTokenQuery,
+  createLeagueQuery,
+  createTeamQuery,
+  getLeaguesQuery,
+  deleteLeagueQuery,
+  updateLeagueQuery
 };
