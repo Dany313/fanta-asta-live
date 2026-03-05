@@ -29,6 +29,16 @@ const initializeDatabase = async () => {
     // await db.query(`ALTER TABLE players ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`);
     // await db.query(`ALTER TABLE players ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`);
 
+    // 2. Creazione Tabella LEAGUES
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS leagues (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) UNIQUE NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // 2. Creazione Tabella TEAMS
     await db.query(`
       CREATE TABLE IF NOT EXISTS teams (
@@ -36,7 +46,8 @@ const initializeDatabase = async () => {
         name VARCHAR(255) UNIQUE NOT NULL,
         remaining_budget INTEGER DEFAULT 500,
         max_possible_bid INTEGER DEFAULT 475,
-        invite_token UUID DEFAULT gen_random_uuid()
+        invite_token UUID DEFAULT gen_random_uuid(),
+        league_id INTEGER REFERENCES leagues(id) ON DELETE CASCADE
       );
     `);
 
@@ -49,18 +60,6 @@ const initializeDatabase = async () => {
         purchase_price INTEGER NOT NULL
       );
     `);
-
-    // 4. SEEDING: Inserimento delle squadre di base (solo se non ci sono)
-    const checkTeams = await db.query(`SELECT COUNT(*) FROM teams`);
-    if (parseInt(checkTeams.rows[0].count) === 0) {
-      console.log("🌱 Database vuoto: Inserimento delle squadre di base...");
-      await db.query(`
-        INSERT INTO teams (name, remaining_budget) VALUES 
-        ('Carlo', 500),
-        ('Pep', 500),
-        ('Thiago', 500)
-      `);
-    }
 
     console.log("✅ Database pronto e sincronizzato!");
   } catch (error) {

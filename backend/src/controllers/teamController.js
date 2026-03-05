@@ -4,7 +4,13 @@ const TeamMapper = require('../mappers/TeamMapper');
 
 exports.getTeams = async (req, res) => {
   try {
-    const result = await db.query(queries.getTeamsQuery);
+    const { leagueId } = req.query;
+    let result;
+    if (leagueId) {
+      result = await db.query(queries.getTeamsByLeagueQuery, [leagueId]);
+    } else {
+      result = await db.query(queries.getTeamsQuery);
+    }
     // 1. Convertiamo le righe DB in Entities
     // 2. Convertiamo le Entities in DTOs (nascondendo il token)
     const dtos = result.rows.map(row => TeamMapper.toDto(TeamMapper.toEntity(row)));
@@ -27,3 +33,14 @@ exports.verifyToken = async (req, res) => {
     res.status(500).json({ success: false, error: 'Errore interno' });
   }
 };
+
+exports.createTeam = async (req, res) => {
+  try {
+    const { name, leagueId } = req.body;
+    const result = await db.query(queries.createTeamQuery, [name, leagueId]);
+    const teamEntity = TeamMapper.toEntity(result.rows[0]);
+    res.status(201).json(teamEntity);
+  } catch (error) {
+    res.status(500).json({ error: 'Errore interno' });
+  }
+}

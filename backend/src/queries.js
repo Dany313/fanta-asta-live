@@ -10,10 +10,18 @@ const getRostersQuery = `
     `;
 const getTeamsQuery = `SELECT * FROM teams ORDER BY name ASC`;
 const verifyTokenQuery = `SELECT id, name FROM teams WHERE invite_token = $1`;
+const createLeagueQuery = `INSERT INTO leagues (name) VALUES ($1) RETURNING id, name`;
+const createTeamQuery = `INSERT INTO teams (name, league_id) VALUES ($1, $2) RETURNING *`;
+const getLeaguesQuery = `SELECT * FROM leagues`;
+const getTeamsByLeagueQuery = `SELECT * FROM teams WHERE league_id = $1 ORDER BY name ASC`;
 
 module.exports = {
   getPlayersQuery,
   getRostersQuery,
   getTeamsQuery,
-  verifyTokenQuery
+  getTeamsByLeagueQuery,
+  verifyTokenQuery,
+  createLeagueQuery,
+  createTeamQuery,
+  getLeaguesQuery
 };
