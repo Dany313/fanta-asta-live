@@ -30,7 +30,8 @@ const RosterPage = () => {
             try {
                 setLoading(true);
                 const token = localStorage.getItem('adminToken');
-                const rosterResponse = await axios.get(`http://localhost:3000/api/rosters/${teamId}`, {
+                const rosterResponse = await axios.get(`http://localhost:3000/api/rosters`, {
+                    params: { teamId },
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setRoster(rosterResponse.data);

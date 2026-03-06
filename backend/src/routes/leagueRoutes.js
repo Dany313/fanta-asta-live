@@ -4,6 +4,7 @@ const leagueController = require('../controllers/leagueController');
 
 router.post('/', leagueController.createLeague);
 router.get('/', leagueController.getLeagues);
+router.get('/:id', leagueController.getLeagueById);
 router.put('/:id', leagueController.updateLeague);
 router.delete('/:id', leagueController.deleteLeague);
 
