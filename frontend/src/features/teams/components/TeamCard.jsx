@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -16,8 +15,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { useNavigate } from 'react-router-dom';
 
-
-const LeagueCard = ({ id, name, onDelete, onUpdate }) => {
+const TeamCard = ({ id, name, onDelete, onUpdate }) => {
     const [anchorEl, setAnchorEl] = React.useState(null);
     const navigate = useNavigate();
     const open = Boolean(anchorEl);
@@ -57,12 +55,12 @@ const LeagueCard = ({ id, name, onDelete, onUpdate }) => {
                 </Stack>
             </CardContent>
             <CardActions>
-                <Button size="small" onClick={() => navigate(`/leagues/${id}`)}>
-                    Vai alla lega
+                <Button size="small" onClick={() => navigate(`/roster/${id}`)}>
+                    Vai alla squadra
                 </Button>
             </CardActions>
         </Card>
     );
 };
 
-export default LeagueCard;
+export default TeamCard;

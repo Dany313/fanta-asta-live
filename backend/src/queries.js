@@ -17,6 +17,8 @@ const getTeamsByLeagueQuery = `SELECT * FROM teams WHERE league_id = $1 ORDER BY
 
 const deleteLeagueQuery = `DELETE FROM leagues WHERE id = $1`;
 const updateLeagueQuery = `UPDATE leagues SET name = $1 WHERE id = $2 RETURNING *`;
+const updateTeamQuery = `UPDATE teams SET name = $1 WHERE id = $2 RETURNING *`;
+const deleteTeamQuery = `DELETE FROM teams WHERE id = $1`;
 
 module.exports = {
   getPlayersQuery,
@@ -28,5 +30,7 @@ module.exports = {
   createTeamQuery,
   getLeaguesQuery,
   deleteLeagueQuery,
-  updateLeagueQuery
+  updateLeagueQuery,
+  updateTeamQuery,
+  deleteTeamQuery
 };
