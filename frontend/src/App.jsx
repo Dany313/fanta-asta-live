@@ -10,6 +10,7 @@ import JoinViewer from './features/viewer/JoinViewer';
 import Navbar from './components/Navbar';
 import LeaguesPage from './features/leagues/LeaguesPage';
 import TeamsPage from './features/teams/TeamsPage';
+import RosterPage from './features/roster/RosterPage';
 
 // Le nostre "Guardie" per proteggere le rotte
 const ProtectedAdminRoute = ({ children }) => {
@@ -45,6 +46,12 @@ function App() {
           <Route path="/leagues" element={
             <ProtectedAdminRoute>
               <LeaguesPage />
+            </ProtectedAdminRoute>
+          } />
+
+          <Route path="/roster/:teamId" element={
+            <ProtectedAdminRoute>
+              <RosterPage />
             </ProtectedAdminRoute>
           } />
 

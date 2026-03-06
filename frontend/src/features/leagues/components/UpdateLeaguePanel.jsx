@@ -1,9 +1,9 @@
 import Button from '@mui/material/Button';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 
-const UpdateLeaguePanel = ({ oldName, onClick }) => {
+const UpdateLeaguePanel = ({ onClick }) => {
     const [newLeagueName, setNewLeagueName] = useState('');
 
     return (
