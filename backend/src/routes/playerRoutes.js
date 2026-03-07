@@ -5,6 +5,6 @@ const playerController = require('../controllers/playerController');
 const authMiddleware = require('../middlewares/authMiddleware'); // Importiamo il buttafuori
 
 // Inseriamo "authMiddleware.verifyAdmin" in mezzo, prima del controller!
-router.get('/', authMiddleware.verifyAdmin, playerController.getPlayers);
+router.get('/', playerController.getPlayers);
 
 module.exports = router;

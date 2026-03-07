@@ -43,7 +43,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<AdminLogin />} />
           
-          <Route path="/leagues" element={
+          <Route path="/" element={
             <ProtectedAdminRoute>
               <LeaguesPage />
             </ProtectedAdminRoute>
@@ -69,12 +69,12 @@ function App() {
             </ProtectedViewerRoute>
           } />
           
-          <Route path="/" element={
+          {/* <Route path="/" element={
             <div style={{ textAlign: 'center', marginTop: '50px' }}>
               <h1>Benvenuto all'Asta del Fantacalcio! ⚽</h1>
               <p>Scegli un'area dal menu in alto per iniziare.</p>
             </div>
-          } />
+          } /> */}
         </Routes>
       </div>
     </BrowserRouter>
