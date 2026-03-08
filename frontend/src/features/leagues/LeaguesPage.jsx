@@ -1,5 +1,5 @@
 import Button from '@mui/material/Button';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import axios from 'axios';
 import LeagueCard from './components/LeagueCard';
 import AddLeaguePanel from './components/AddLeaguePanel';
@@ -11,6 +11,9 @@ import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Grid';
 import UpdateLeaguePanel from './components/UpdateLeaguePanel';
 import { useNavigate } from 'react-router-dom';
+import { getLeagues, postLeague, putLeague, delLeague } from '../../api/leaguesApi'; // Usa il nuovo hook per le leghe
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 
 
 
@@ -27,110 +30,87 @@ const style = {
 };
 
 const LeaguesPage = () => {
-    const [leagues, setLeagues] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
+
+    //Queries
+    const { data: leagues = [], isLoading: loading } = useQuery({
+        queryKey: ['leagues'],
+        queryFn: getLeagues
+    });
+
+    // Mutations
+    const { mutate: postMutation } = useMutation({
+        mutationFn: postLeague,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['leagues'] });
+            handleClose();
+        },
+        onError: (error) => {
+            console.error("Errore", error);
+            if (error.response && error.response.status === 401) handleLogout();
+            else alert("Errore durante la creazione");
+        }
+    });
+
+    const { mutate: putMutation } = useMutation({
+        mutationFn: putLeague,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['leagues'] });
+            handleClose();
+        },
+        onError: (error) => {
+            console.error("Errore", error);
+            if (error.response && error.response.status === 401) handleLogout();
+            else alert("Errore durante la modfica");
+        }
+    });
+
+    const { mutate: deleteMutation } = useMutation({
+        mutationFn: delLeague,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['leagues'] });
+        },
+        onError: (error) => {
+            console.error("Errore", error);
+            if (error.response && error.response.status === 401) handleLogout();
+            else alert("Errore durante la cancellazione");
+        }
+    });
+
+
     const [openAdd, setOpenAdd] = React.useState(false);
     const [editingLeague, setEditingLeague] = useState(null); // Stato per la lega in modifica
-    const navigate = useNavigate();
 
     const handleOpenAdd = () => setOpenAdd(true);
     const handleClose = () => {
         setOpenAdd(false);
         setEditingLeague(null);
     };
-    const handleLogout = () => {
-        localStorage.removeItem('adminToken');
-        navigate('/login');
-    };
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                const token = localStorage.getItem('adminToken');
-                const leaguesRes = await axios.get('http://localhost:3000/api/leagues', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setLeagues(leaguesRes.data);
-
-            } catch (error) {
-                console.error("Errore nel caricamento", error);
-                if (error.response && error.response.status === 401) handleLogout();
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, []);
-
-    const handlePostLeague = async (newLeagueName) => {
+    const addLeague = (newLeagueName) => {
         if (!newLeagueName || newLeagueName.trim() === '') {
             alert("Inserire un nome valido per la lega");
             return;
         }
         if (window.confirm(`Vuoi davvero creare la lega: ${newLeagueName}?`)) {
-            try {
-                setLoading(true);
-                const token = localStorage.getItem('adminToken');
-                const leaguesRes = await axios.post('http://localhost:3000/api/leagues',
-                    { name: newLeagueName },
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
-                setLeagues(prevLeagues => [...prevLeagues, leaguesRes.data]);
-
-            } catch (error) {
-                console.error("Errore nella creazione", error);
-                if (error.response && error.response.status === 401) handleLogout();
-            } finally {
-                handleClose();
-                setLoading(false);
-            }
+            postMutation(newLeagueName);
         }
     };
 
-    const handleDeleteLeague = async (leagueId) => {
+    const deleteLeague = (leagueId) => {
         if (window.confirm(`Vuoi davvero eliminare la lega e tutti i partecipanti?`)) {
-            try {
-                setLoading(true);
-                const token = localStorage.getItem('adminToken');
-                await axios.delete(`http://localhost:3000/api/leagues/${leagueId}`,
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
-                setLeagues(prevLeagues => prevLeagues.filter(league => league.id !== leagueId));
-
-            } catch (error) {
-                console.error("Errore", error);
-                if (error.response && error.response.status === 401) handleLogout();
-            } finally {
-                setLoading(false);
-            }
+            deleteMutation(leagueId);
         }
     };
 
-    const handleUpdateLeague = async (newLeagueName) => {
+    const updateLeague = (newLeagueName) => {
         if (!newLeagueName || newLeagueName.trim() === '') {
             alert("Inserire un nome valido per la lega");
             return;
         }
         if (window.confirm(`Vuoi davvero modificare la lega?`)) {
-            try {
-                setLoading(true);
-                if (!editingLeague) return;
-                const token = localStorage.getItem('adminToken');
-                const res = await axios.put(`http://localhost:3000/api/leagues/${editingLeague.id}`,
-                    { name: newLeagueName },
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
-                const updatedLeague = res.data || { ...editingLeague, name: newLeagueName };
-                setLeagues(prevLeagues => prevLeagues.map(league => league.id === editingLeague.id ? updatedLeague : league));
-
-            } catch (error) {
-                console.error("Errore nella modifica", error);
-                if (error.response && error.response.status === 401) handleLogout();
-            } finally {
-                handleClose();
-                setLoading(false);
-            }
+            if (!editingLeague) return;
+            putMutation({ id: editingLeague.id, leaguename: newLeagueName });
         }
     };
     return (
@@ -148,7 +128,7 @@ const LeaguesPage = () => {
                 aria-describedby="modal-description"
             >
                 <Box sx={style}>
-                    <AddLeaguePanel onClick={handlePostLeague} />
+                    <AddLeaguePanel onClick={addLeague} />
                 </Box>
             </Modal>
             {/* Modal per Modificare (fuori dal loop) */}
@@ -159,7 +139,7 @@ const LeaguesPage = () => {
                 aria-describedby="modal-description"
             >
                 <Box sx={style}>
-                    <UpdateLeaguePanel oldName={editingLeague?.name} onClick={handleUpdateLeague} />
+                    <UpdateLeaguePanel oldName={editingLeague?.name} onClick={updateLeague} />
                 </Box>
             </Modal>
 
@@ -169,7 +149,7 @@ const LeaguesPage = () => {
                         <Grid container spacing={2}>
                             {leagues.map(league => (
                                 <Grid item key={league.id}>
-                                    <LeagueCard id={league.id} name={league.name} onDelete={handleDeleteLeague} onUpdate={() => setEditingLeague(league)} />
+                                    <LeagueCard id={league.id} name={league.name} onDelete={deleteLeague} onUpdate={() => setEditingLeague(league)} />
                                 </Grid>
                             ))}
                         </Grid>

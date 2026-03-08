@@ -11,6 +11,8 @@ import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Grid';
 import UpdateTeamPanel from './components/UpdateTeamPanel';
 import { useNavigate, useParams } from 'react-router-dom';
+import { getTeams, postTeam, putTeam, delTeam } from '../../api/teamsApi'; // Usa il nuovo hook per le leghe
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 
 
@@ -27,9 +29,57 @@ const style = {
 };
 
 const TeamsPage = () => {
+
     const { leagueId } = useParams();
-    const [teams, setTeams] = useState([]);
-    const [loading, setLoading] = useState(true);
+
+    const queryClient = useQueryClient();
+
+    //Queries
+    const { data: teams = [], isLoading: loading } = useQuery({
+        queryKey: ['teams', leagueId],
+        queryFn: () => getTeams(leagueId)
+    });
+
+    // Mutations
+    const { mutate: postMutation } = useMutation({
+        mutationFn: postTeam,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['teams'] });
+            handleClose();
+        },
+        onError: (error) => {
+            console.error("Errore", error);
+            if (error.response && error.response.status === 401) handleLogout();
+            else alert("Errore durante la creazione");
+        }
+    });
+
+    const { mutate: putMutation } = useMutation({
+        mutationFn: putTeam,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['teams'] });
+            handleClose();
+        },
+        onError: (error) => {
+            console.error("Errore", error);
+            if (error.response && error.response.status === 401) handleLogout();
+            else alert("Errore durante la modfica");
+        }
+    });
+
+    const { mutate: deleteMutation } = useMutation({
+        mutationFn: delTeam,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['teams'] });
+        },
+        onError: (error) => {
+            console.error("Errore", error);
+            if (error.response && error.response.status === 401) handleLogout();
+            else alert("Errore durante la cancellazione");
+        }
+    });
+
+
     const [openAdd, setOpenAdd] = useState(false);
     const [editingTeam, setEditingTeam] = useState(null);
     const navigate = useNavigate();
@@ -39,101 +89,32 @@ const TeamsPage = () => {
         setOpenAdd(false);
         setEditingTeam(null);
     };
-    const handleLogout = () => {
-        localStorage.removeItem('adminToken');
-        navigate('/login');
-    };
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                const token = localStorage.getItem('adminToken');
-                // Passiamo leagueId come parametro di query
-                const teamsRes = await axios.get('http://localhost:3000/api/teams', {
-                    params: { leagueId },
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setTeams(teamsRes.data);
 
-            } catch (error) {
-                console.error("Errore nel caricamento", error);
-                if (error.response && error.response.status === 401) handleLogout();
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [leagueId]);
 
-    const handlePostTeam = async (newTeamName) => {
+    const createTeam = async (newTeamName) => {
         if (!newTeamName || newTeamName.trim() === '') {
             alert("Inserire un nome valido per la squadra");
             return;
         }
         if (window.confirm(`Vuoi davvero creare la squadra: ${newTeamName}?`)) {
-            try {
-                setLoading(true);
-                const token = localStorage.getItem('adminToken');
-                const teamsRes = await axios.post('http://localhost:3000/api/teams',
-                    { name: newTeamName, leagueId: leagueId },
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
-                setTeams(prevTeams => [...prevTeams, teamsRes.data]);
-
-            } catch (error) {
-                console.error("Errore nella creazione", error);
-                if (error.response && error.response.status === 401) handleLogout();
-            } finally {
-                handleClose();
-                setLoading(false);
-            }
+            postMutation(newTeamName);
         }
     };
 
-    const handleDeleteTeam = async (teamId) => {
+    const deleteTeam = async (teamId) => {
         if (window.confirm(`Vuoi davvero eliminare la squadra e tutti i partecipanti?`)) {
-            try {
-                setLoading(true);
-                const token = localStorage.getItem('adminToken');
-                await axios.delete(`http://localhost:3000/api/teams/${teamId}`,
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
-                setTeams(prevTeams => prevTeams.filter(team => team.id !== teamId));
-
-            } catch (error) {
-                console.error("Errore", error);
-                if (error.response && error.response.status === 401) handleLogout();
-            } finally {
-                setLoading(false);
-            }
+            deleteMutation(teamId);
         }
     };
 
-    const handleUpdateTeam = async (newTeamName) => {
+    const updateTeam = async (newTeamName) => {
         if (!newTeamName || newTeamName.trim() === '') {
             alert("Inserire un nome valido per la squadra");
             return;
         }
         if (window.confirm(`Vuoi davvero modificare la squadra?`)) {
-            try {
-                setLoading(true);
-                if (!editingTeam) return;
-                const token = localStorage.getItem('adminToken');
-                const res = await axios.put(`http://localhost:3000/api/teams/${editingTeam.id}`,
-                    { name: newTeamName },
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
-                const updatedTeam = res.data || { ...editingTeam, name: newTeamName };
-                setTeams(prevTeams => prevTeams.map(team => team.id === editingTeam.id ? updatedTeam : team));
-
-            } catch (error) {
-                console.error("Errore nella modifica", error);
-                if (error.response && error.response.status === 401) handleLogout();
-            } finally {
-                handleClose();
-                setLoading(false);
-            }
+            putMutation({ id: editingTeam.id, teamname: newTeamName });
         }
     };
     return (
@@ -145,7 +126,7 @@ const TeamsPage = () => {
                         <AddIcon />
                     </IconButton>
                 </Stack>
-                <Button variant="outlined" color="secondary" onClick={() => {navigate(`/auction/${leagueId}`); localStorage.removeItem('adminTeamId');}}>Avvia Asta</Button>
+                <Button variant="outlined" color="secondary" onClick={() => { navigate(`/auction/${leagueId}`); localStorage.removeItem('adminTeamId'); }}>Avvia Asta</Button>
             </Stack>
             <Modal
                 open={openAdd}
@@ -154,7 +135,7 @@ const TeamsPage = () => {
                 aria-describedby="modal-description"
             >
                 <Box sx={style}>
-                    <AddTeamPanel onClick={handlePostTeam} />
+                    <AddTeamPanel onClick={createTeam} />
                 </Box>
             </Modal>
             {/* Modal per Modificare (fuori dal loop) */}
@@ -165,7 +146,7 @@ const TeamsPage = () => {
                 aria-describedby="modal-description"
             >
                 <Box sx={style}>
-                    <UpdateTeamPanel oldName={editingTeam?.name} onClick={handleUpdateTeam} />
+                    <UpdateTeamPanel oldName={editingTeam?.name} onClick={updateTeam} />
                 </Box>
             </Modal>
 
@@ -175,7 +156,7 @@ const TeamsPage = () => {
                         <Grid container spacing={2}>
                             {teams.map(team => (
                                 <Grid item key={team.id}>
-                                    <TeamCard id={team.id} name={team.name} onDelete={handleDeleteTeam} onUpdate={() => setEditingTeam(team)} />
+                                    <TeamCard id={team.id} name={team.name} onDelete={deleteTeam} onUpdate={() => setEditingTeam(team)} />
                                 </Grid>
                             ))}
                         </Grid>
