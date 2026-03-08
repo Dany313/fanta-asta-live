@@ -138,11 +138,14 @@ const TeamsPage = () => {
     };
     return (
         <div>
-            <Stack direction="row" alignItems="center" spacing={1}>
-                <h2>Gestione Partecipanti</h2>
-                <IconButton color="primary" aria-label="add" onClick={handleOpenAdd}>
-                    <AddIcon />
-                </IconButton>
+            <Stack direction="row" justifyContent='space-between' alignItems="center" spacing={1}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                    <h2>Gestione Partecipanti</h2>
+                    <IconButton color="primary" aria-label="add" onClick={handleOpenAdd}>
+                        <AddIcon />
+                    </IconButton>
+                </Stack>
+                <Button variant="outlined" color="secondary" onClick={() => {navigate(`/auction/${leagueId}`); localStorage.removeItem('adminTeamId');}}>Avvia Asta</Button>
             </Stack>
             <Modal
                 open={openAdd}

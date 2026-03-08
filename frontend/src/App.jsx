@@ -1,16 +1,17 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Importiamo le Pagine
-import AdminDashboard from './features/admin/AdminDashboard';
-import AdminLogin from './features/admin/AdminLogin';
-import ViewerBoard from './features/viewer/ViewerBoard';
-import JoinViewer from './features/viewer/JoinViewer';
+// import AdminDashboard from './features/admin/AdminDashboard';
+// import AdminLogin from './features/admin/AdminLogin';
+// import ViewerBoard from './features/viewer/ViewerBoard';
+// import JoinViewer from './features/viewer/JoinViewer';
 
 // Importiamo i Componenti globali
 import Navbar from './components/Navbar';
 import LeaguesPage from './features/leagues/LeaguesPage';
 import TeamsPage from './features/teams/TeamsPage';
 import RosterPage from './features/roster/RosterPage';
+import AdminAuctionPage from './features/auction/AdminAuctionPage';
 
 // Le nostre "Guardie" per proteggere le rotte
 const ProtectedAdminRoute = ({ children }) => {
@@ -41,7 +42,7 @@ function App() {
       {/* Un contenitore generico per staccare i contenuti dalla navbar */}
       <div style={{ padding: '20px' }}>
         <Routes>
-          <Route path="/login" element={<AdminLogin />} />
+          {/* <Route path="/login" element={<AdminLogin />} /> */}
           
           <Route path="/" element={
             <ProtectedAdminRoute>
@@ -55,19 +56,25 @@ function App() {
             </ProtectedAdminRoute>
           } />
 
+          <Route path="/auction/:leagueId" element={
+            <ProtectedAdminRoute>
+              <AdminAuctionPage />
+            </ProtectedAdminRoute>
+          } />
+
           <Route path="/leagues/:leagueId" element={
             <ProtectedAdminRoute>
               <TeamsPage />
             </ProtectedAdminRoute>
           } />
           
-          <Route path="/join/:token" element={<JoinViewer />} />
+          {/* <Route path="/join/:token" element={<JoinViewer />} /> */}
           
-          <Route path="/viewer" element={
+          {/* <Route path="/viewer" element={
             <ProtectedViewerRoute>
               <ViewerBoard />
             </ProtectedViewerRoute>
-          } />
+          } /> */}
           
           {/* <Route path="/" element={
             <div style={{ textAlign: 'center', marginTop: '50px' }}>
