@@ -1,95 +1,78 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import RosterList from './components/RosterList';
 import { useParams } from 'react-router-dom';
+import { getRoster } from '../../api/rosterApi';
+import { getPlayers } from '../../api/playersApi';
+import { useQuery, useMutation, useQueryClient} from '@tanstack/react-query';
+import { addPlayerToRoster, putPlayerPrice, removePlayerFromRoster } from '../../api/rosterApi';
 
 const RosterPage = () => {
+    const queryClient = useQueryClient();
+    
     const { teamId } = useParams();
-    const [roster, setRoster] = useState([]);
-    const [allPlayers, setAllPlayers] = useState([]);
-    const [loading, setLoading] = useState(true);
 
-    const fetchData = useCallback(async () => {
-        try {
-            setLoading(true);
-            const token = localStorage.getItem('adminToken');
-            const headers = { Authorization: `Bearer ${token}` };
+     //Queries
+    const { data: roster = [], isLoading: loading } = useQuery({
+        queryKey: ['rosters', teamId],
+        queryFn: () => getRoster(teamId)
+    });
 
-            const rosterResponse = await axios.get(`http://localhost:3000/api/rosters`, {
-                params: { teamId },
-                headers
-            });
-            setRoster(rosterResponse.data);
+    const { data: allPlayers = [], isLoading: loadingPlayers } = useQuery({
+        queryKey: ['players'],
+        queryFn: getPlayers,
+        select: (data) => data.filter(player => !roster.some(r => r.player_id === player.id)) // Filtra i giocatori già nel roster
+    });
 
-            const playersResponse = await axios.get(`http://localhost:3000/api/players`, { headers });
-            setAllPlayers(playersResponse.data);
-
-        } catch (error) {
-            console.error("Errore nel caricamento", error);
-        } finally {
-            setLoading(false);
-        }
-    }, [teamId]);
-
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
-
-    const handleAddPlayer = async (player) => {
-        try {
-            // TODO: Prompt for purchase price
+        // Mutations
+    const { mutate: postMutation } = useMutation({
+        mutationFn: async (player) => {
             const purchasePrice = prompt(`Inserisci il prezzo di acquisto per ${player.name}:`, 1);
-            if (purchasePrice === null || isNaN(purchasePrice)) return; // User cancelled or entered invalid number
-
-            const token = localStorage.getItem('adminToken');
-            await axios.post(`http://localhost:3000/api/rosters`, {
-                teamId,
-                playerId: player.id,
-                purchasePrice: parseInt(purchasePrice, 10)
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            fetchData(); // Refetch roster
-        } catch (error) {
-            console.error("Errore nell'aggiungere il giocatore", error);
+            if (purchasePrice === null || isNaN(purchasePrice)) throw new Error("Cancelled");
+            return addPlayerToRoster({ team_id: teamId, player_id: player.id, price: parseInt(purchasePrice, 10) });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['rosters'] });
+        },
+        onError: (error) => {
+            if (error.message === "Cancelled") return;
+            console.error("Errore", error);
+            if (error.response && error.response.status === 401) handleLogout();
+            else alert("Errore durante la creazione");
         }
-    };
+    });
 
-    const handleUpdatePlayer = async (playerId) => {
-        try {
-             // TODO: Prompt for new purchase price
-             const purchasePrice = prompt(`Inserisci il nuovo prezzo di acquisto:`, 1);
-             if (purchasePrice === null || isNaN(purchasePrice)) return;
-
-            const token = localStorage.getItem('adminToken');
-            await axios.put(`http://localhost:3000/api/rosters`, {
-                teamId,
-                playerId,
-                purchasePrice: parseInt(purchasePrice, 10)
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            fetchData(); // Refetch roster
-        } catch (error) {
-            console.error("Errore nell'aggiornare il giocatore", error);
+    const { mutate: putMutation } = useMutation({
+        mutationFn: async (playerId) => {
+            const purchasePrice = prompt(`Inserisci il nuovo prezzo di acquisto:`, 1);
+            if (purchasePrice === null || isNaN(purchasePrice)) throw new Error("Cancelled");
+            return putPlayerPrice({ team_id: teamId, player_id: playerId, price: parseInt(purchasePrice, 10) });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['rosters'] });
+        },
+        onError: (error) => {
+            if (error.message === "Cancelled") return;
+            console.error("Errore", error);
+            if (error.response && error.response.status === 401) handleLogout();
+            else alert("Errore durante la modfica");
         }
-    };
+    });
 
-    const handleDeletePlayer = async (playerId) => {
-        if (window.confirm('Sei sicuro di voler eliminare questo giocatore?')) {
-            try {
-                const token = localStorage.getItem('adminToken');
-                await axios.delete(`http://localhost:3000/api/rosters`, {
-                    data: { teamId, playerId },
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                fetchData(); // Refetch roster
-            } catch (error) {
-                console.error("Errore nell'eliminare il giocatore", error);
-            }
+    const { mutate: deleteMutation } = useMutation({
+        mutationFn: async (playerId) => {
+            if (!window.confirm('Sei sicuro di voler eliminare questo giocatore?')) throw new Error("Cancelled");
+            return removePlayerFromRoster({ team_id: teamId, player_id: playerId });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['rosters'] });
+        },
+        onError: (error) => {
+            if (error.message === "Cancelled") return;
+            console.error("Errore", error);
+            if (error.response && error.response.status === 401) handleLogout();
+            else alert("Errore durante la cancellazione");
         }
-    };
+    });
 
 
     return (
@@ -99,9 +82,9 @@ const RosterPage = () => {
                 <RosterList
                     players={roster}
                     allPlayers={allPlayers}
-                    onAdd={handleAddPlayer}
-                    onUpdate={handleUpdatePlayer}
-                    onDelete={handleDeletePlayer}
+                    onAdd={postMutation}
+                    onUpdate={putMutation}
+                    onDelete={deleteMutation}
                 />
             )}
         </div>

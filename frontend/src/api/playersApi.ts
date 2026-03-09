@@ -1,5 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
-
 
 interface Player {
     id: number;
@@ -9,15 +7,11 @@ interface Player {
     current_price: number;
 }
 
-export const usePlayers = () => {
-    return useQuery({
-        queryKey: ['players'],
-        queryFn: async (): Promise<Player[]> => {
-            const token = localStorage.getItem('adminToken');
-            const response = await fetch('http://localhost:3000/api/players', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            return response.json();
-        }
+export const getPlayers = async (): Promise<Player[]> => {
+    const token = localStorage.getItem('adminToken');
+    const response = await fetch('http://localhost:3000/api/players', {
+        headers: { Authorization: `Bearer ${token}` }
     });
+    if (!response.ok) throw new Error('Errore nel recupero dei giocatori');
+    return response.json();
 };

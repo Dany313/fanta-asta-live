@@ -34,7 +34,7 @@ exports.updateLeague = async (req, res) => {
 
 exports.getLeagues = async (req, res) => {
     try {
-        const result = await db.query(`SELECT * FROM leagues`);
+        const result = await db.query(`SELECT * FROM leagues ORDER By id DESC`);
         const leagues = result.rows.map(LeagueMapper.toEntity);
         res.json(leagues);
     } catch (error) {
