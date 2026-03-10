@@ -12,6 +12,7 @@ import LeaguesPage from './features/leagues/LeaguesPage';
 import TeamsPage from './features/teams/TeamsPage';
 import RosterPage from './features/roster/RosterPage';
 import AdminAuctionPage from './features/auction/AdminAuctionPage';
+import SelectAdminTeamPage from './features/auction/SelectAdminTeamPage';
 
 // Le nostre "Guardie" per proteggere le rotte
 const ProtectedAdminRoute = ({ children }) => {
@@ -59,6 +60,12 @@ function App() {
           <Route path="/auction/:leagueId" element={
             <ProtectedAdminRoute>
               <AdminAuctionPage />
+            </ProtectedAdminRoute>
+          } />
+
+          <Route path="/selectTeam/:leagueId" element={
+            <ProtectedAdminRoute>
+              <SelectAdminTeamPage />
             </ProtectedAdminRoute>
           } />
 

@@ -4,14 +4,14 @@ export default function BidPanel({ currentBid, onBid, disabled }) {
   const [customBid, setCustomBid] = useState('');
 
   const handleQuickBid = (increment) => {
-    onBid(currentBid + increment);
+    onBid(null,currentBid + increment);
   };
 
   const handleCustomBid = (e) => {
     e.preventDefault();
     const val = parseInt(customBid);
     if (val > currentBid) {
-      onBid(val);
+      onBid(null,val);
       setCustomBid('');
     }
   };

@@ -1,73 +1,168 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Paper, Typography, Box, Button, TextField, Stack, Avatar } from '@mui/material';
+import SendIcon from '@mui/icons-material/Send';
 
-// Props:
-// - player: l'oggetto col giocatore (nome, ruolo, ecc.)
-// - title: la scritta in alto (es. "ALL'ASTA ORA" o "VENDUTO")
-// - bgColor: il colore di sfondo della card
-// - textColor: il colore del testo
-// - children: tutto ciò che inseriremo "dentro" il tag (es. i bottoni dell'admin)
-export default function PlayerCard({ 
-  player, 
-  title = "🔨 ALL'ASTA ORA", 
-  bgColor = '#1e90ff', 
-  textColor = 'white', 
-  children 
-}) {
-  
-  if (!player) return null;
+const styles = {
+    container: {
+        padding: '30px',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
+        textAlign: 'center',
+        border: '1px solid #f1f2f6',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column'
+    },
+    header: {
+        marginBottom: '20px',
+        textTransform: 'uppercase',
+        letterSpacing: '1px',
+        color: '#e67e22',
+        fontWeight: 'bold'
+    },
+    roleBadge: (role) => {
+        const colors = { 'P': '#f39c12', 'D': '#2ecc71', 'C': '#3498db', 'A': '#e74c3c' };
+        return {
+            backgroundColor: colors[role] || '#95a5a6',
+            color: 'white',
+            fontWeight: 'bold',
+            width: '50px',
+            height: '50px',
+            fontSize: '20px',
+            marginBottom: '10px'
+        };
+    },
+    playerName: {
+        fontWeight: '900',
+        color: '#2f3542',
+        margin: '10px 0',
+        textTransform: 'uppercase'
+    },
+    clubName: {
+        color: '#747d8c',
+        marginBottom: '25px',
+        fontWeight: '500'
+    },
+    priceBox: {
+        backgroundColor: '#f1f2f6',
+        padding: '15px 30px',
+        borderRadius: '12px',
+        display: 'inline-block',
+        marginBottom: '20px',
+        border: '1px solid #dfe4ea'
+    },
+    priceLabel: {
+        fontSize: '14px',
+        color: '#a4b0be',
+        textTransform: 'uppercase',
+        fontWeight: 'bold'
+    },
+    priceValue: {
+        fontSize: '42px',
+        fontWeight: 'bold',
+        color: '#2f3542',
+        lineHeight: '1'
+    },
+    bidControls: {
+        marginTop: '20px',
+        paddingTop: '20px',
+        borderTop: '1px solid #f1f2f6'
+    },
+    quickBidButton: {
+        borderRadius: '8px',
+        fontWeight: 'bold',
+        padding: '8px 20px',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
+    }
+};
 
-  // I classici colori del Fantacalcio per i ruoli!
-  const roleColors = {
-    'P': '#f39c12', // Arancione/Giallo
-    'D': '#2ecc71', // Verde
-    'C': '#3498db', // Blu
-    'A': '#e74c3c'  // Rosso
-  };
-  const badgeColor = roleColors[player.role] || '#2f3542';
+export default function PlayerCard({ player, currentBid, onBid, title = "🔨 ASTA IN CORSO" }) {
+    const [customBid, setCustomBid] = useState('');
 
-  return (
-    <div style={{ 
-      width: '100%', maxWidth: '600px', padding: '30px', margin: '0 auto', textAlign: 'center',
-      backgroundColor: bgColor, color: textColor, borderRadius: '15px', 
-      boxShadow: `0 10px 25px rgba(0,0,0,0.15)`
-    }}>
-      <h3 style={{ margin: '0 0 20px 0', opacity: 0.9 }}>{title}</h3>
-      
-      {/* Badge del Ruolo */}
-      <span style={{ 
-        backgroundColor: badgeColor, color: 'white', padding: '8px 20px', 
-        borderRadius: '20px', fontWeight: 'bold', fontSize: '20px',
-        textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-      }}>
-        {player.role}
-      </span>
-      
-      <h1 style={{ fontSize: '50px', margin: '20px 0 10px 0' }}>{player.name}</h1>
-      <h2 style={{ margin: '0 0 30px 0', fontWeight: 'normal', opacity: '0.9' }}>{player.club}</h2>
-      
-      {/* Box Base d'Asta / Prezzo */}
-      <div style={{ 
-        backgroundColor: 'rgba(0,0,0,0.15)', padding: '15px 30px', 
-        borderRadius: '10px', display: 'inline-block', 
-        marginBottom: children ? '20px' : '0' 
-      }}>
-        <p style={{ margin: '0', fontSize: '16px', textTransform: 'uppercase' }}>
-          {player.purchase_price ? 'Prezzo Finale' : 'Base Asta'}
-        </p>
-        <p style={{ margin: '5px 0 0 0', fontSize: '35px', fontWeight: 'bold' }}>
-          {player.purchase_price || player.current_price}
-        </p>
-      </div>
+    if (!player) return null;
 
-      {/* 🌟 MAGIA: Qui renderizziamo i "children" (i form dell'Admin o altri dettagli) */}
-      {children && (
-        <div style={{ 
-          marginTop: '20px', paddingTop: '20px', 
-          borderTop: `1px solid ${textColor === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'}` 
-        }}>
-          {children}
-        </div>
-      )}
-    </div>
-  );
+    const handleQuickBid = (increment) => {
+        if (onBid) onBid(null, (currentBid || 0) + increment);
+    };
+
+    const handleCustomBid = (e) => {
+        e.preventDefault();
+        const val = parseInt(customBid, 10);
+        if (!isNaN(val) && val > (currentBid || 0)) {
+            if (onBid) onBid(null, val);
+            setCustomBid('');
+        }
+    };
+
+    return (
+        <Paper style={styles.container} elevation={0}>
+            <Typography variant="subtitle2" style={styles.header}>
+                {title}
+            </Typography>
+
+            <Box display="flex" justifyContent="center" alignItems="center" flexDirection="column" flex={1}>
+                <Avatar sx={styles.roleBadge(player.role)}>
+                    {player.role}
+                </Avatar>
+                
+                <Typography variant="h3" style={styles.playerName}>
+                    {player.name}
+                </Typography>
+                
+                <Typography variant="h6" style={styles.clubName}>
+                    {player.club}
+                </Typography>
+
+                <Box style={styles.priceBox}>
+                    <Typography style={styles.priceLabel}>
+                        Offerta Attuale
+                    </Typography>
+                    <Typography style={styles.priceValue}>
+                        {currentBid || 0} <span style={{fontSize: '20px', verticalAlign: 'top'}}>FM</span>
+                    </Typography>
+                </Box>
+            </Box>
+
+            {onBid && (
+                <Box style={styles.bidControls}>
+                    <Stack direction="row" spacing={2} justifyContent="center" marginBottom={3}>
+                        {[1, 5, 10].map(amount => (
+                            <Button 
+                                key={amount}
+                                variant="contained" 
+                                color="success" 
+                                onClick={() => handleQuickBid(amount)}
+                                style={styles.quickBidButton}
+                            >
+                                +{amount}
+                            </Button>
+                        ))}
+                    </Stack>
+
+                    <form onSubmit={handleCustomBid} style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                        <TextField
+                            size="small"
+                            type="number"
+                            placeholder="Offerta libera..."
+                            value={customBid}
+                            onChange={(e) => setCustomBid(e.target.value)}
+                            InputProps={{ inputProps: { min: (currentBid || 0) + 1 } }}
+                            style={{ width: '150px' }}
+                        />
+                        <Button 
+                            variant="contained" 
+                            color="primary" 
+                            type="submit"
+                            endIcon={<SendIcon />}
+                            disabled={!customBid}
+                            style={{ borderRadius: '8px', fontWeight: 'bold' }}
+                        >
+                            Rilancia
+                        </Button>
+                    </form>
+                </Box>
+            )}
+        </Paper>
+    );
 }

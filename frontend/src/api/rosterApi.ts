@@ -33,6 +33,14 @@ export const getRoster = async (team_id: number): Promise<Roster[]> => {
     return response.json();
 };
 
+export const getRosterByLeague = async (league_id: number): Promise<Roster[]> => {
+    const token = localStorage.getItem('adminToken');
+    const headers = { Authorization: `Bearer ${token}` };
+    const response = await fetch(`http://localhost:3000/api/rosters/league/${league_id}`, { headers });
+    if (!response.ok) throw new Error('Errore nel recupero dei giocatori');
+    return response.json();
+};
+
 export const addPlayerToRoster = async (data: AddPlayerData) => {
     const { team_id, player_id, price } = data;
     const token = localStorage.getItem('adminToken');

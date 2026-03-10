@@ -1,79 +1,124 @@
-import React, { useState, useEffect } from 'react';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
+import React, { useState, useMemo, useEffect } from 'react';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import List from '@mui/material/List';
+import TextField from '@mui/material/TextField';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Box from '@mui/material/Box';
 import TablePagination from '@mui/material/TablePagination';
-import CustomButton from './CustomButton';
+import PlayerListTile from './PlayerListTile';
 
-export default function PlayerTable({ players, onPlayerClick, buttonText, buttonVariant }) {
-  const [page, setPage] = useState(0);
-  const rowsPerPage = 50;
+const styles = {
+    dialogTitle: {
+        backgroundColor: '#f1f2f6',
+        color: '#2f3542',
+        fontWeight: 'bold',
+        borderBottom: '1px solid #dfe4ea',
+        paddingBottom: '20px'
+    },
+    filterContainer: {
+        display: 'flex',
+        gap: '15px',
+        marginTop: '10px'
+    }
+};
 
-  // Resetta la pagina a 0 se cambiano i filtri/dati
-  useEffect(() => {
-    setPage(0);
-  }, [players]);
+export default function PlayerTable({ open, onClose, players, onPlayerClick }) {
+    const [searchTerm, setSearchTerm] = useState("");
+    const [roleFilter, setRoleFilter] = useState("");
+    const [page, setPage] = useState(0);
+    const rowsPerPage = 20;
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+    const handlePlayerSelect = (player) => {
+        onPlayerClick(player);
+        onClose(); // Chiude la modale dopo la selezione
+    };
 
-  if (!players || players.length === 0) {
-    return <p style={{ padding: '20px', textAlign: 'center' }}>Nessun giocatore da mostrare.</p>;
-  }
+    // Filtra i giocatori in base all'input locale
+    const filteredPlayers = useMemo(() => {
+        return players.filter(player => {
+            const nameMatch = player.name.toLowerCase().includes(searchTerm.toLowerCase());
+            const roleMatch = !roleFilter || player.role === roleFilter;
+            return nameMatch && roleMatch;
+        });
+    }, [players, searchTerm, roleFilter]);
 
-  return (
-    <Paper>
-      <TableContainer>
-      <Table sx={{ minWidth: 650 }} aria-label="simple table">
-        <TableHead>
-          <TableRow>
-            <TableCell>Nome</TableCell>
-            <TableCell align="right">R</TableCell>
-            <TableCell align="right">Squadra</TableCell>
-            <TableCell align="right">Qt.A</TableCell>
-            <TableCell align="right">Azione</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {players
-            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-            .map((player) => (
-            <TableRow
-              key={player.id}
-              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-            >
-              <TableCell component="th" scope="row">
-                {player.name}
-              </TableCell>
-              <TableCell align="right">{player.role}</TableCell>
-              <TableCell align="right">{player.club}</TableCell>
-              <TableCell align="right">{player.current_price}</TableCell>
-              <TableCell align="right">
-                <CustomButton
-                  variant={buttonVariant}
-                  onClick={() => onPlayerClick(player)}
-                >
-                  {buttonText}
-                </CustomButton>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-    <TablePagination
-        rowsPerPageOptions={[50]}
-        component="div"
-        count={players.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-      />
-    </Paper>
-  );
+    useEffect(() => {
+        setPage(0);
+    }, [searchTerm, roleFilter]);
+
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    return (
+            <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" scroll="paper">
+                <DialogTitle style={styles.dialogTitle}>
+                    📋 Listone Giocatori
+                    <Box style={styles.filterContainer}>
+                        <TextField
+                            label="Cerca giocatore..."
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        <FormControl size="small" style={{ minWidth: 100 }}>
+                            <InputLabel>Ruolo</InputLabel>
+                            <Select
+                                value={roleFilter}
+                                label="Ruolo"
+                                onChange={(e) => setRoleFilter(e.target.value)}
+                            >
+                                <MenuItem value="">Tutti</MenuItem>
+                                <MenuItem value="P">P</MenuItem>
+                                <MenuItem value="D">D</MenuItem>
+                                <MenuItem value="C">C</MenuItem>
+                                <MenuItem value="A">A</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Box>
+                </DialogTitle>
+                <DialogContent dividers>
+                    <List>
+                        {filteredPlayers.length > 0 ? (
+                            filteredPlayers
+                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                .map((player) => (
+                                <PlayerListTile 
+                                    key={player.id} 
+                                    player={player} 
+                                    onClick={handlePlayerSelect} 
+                                />
+                            ))
+                        ) : (
+                            <p style={{ textAlign: 'center', color: '#a4b0be', marginTop: '20px' }}>
+                                Nessun giocatore trovato.
+                            </p>
+                        )}
+                    </List>
+                </DialogContent>
+                <Box sx={{ borderTop: '1px solid #dfe4ea', backgroundColor: '#f8f9fa' }}>
+                    <TablePagination
+                        component="div"
+                        count={filteredPlayers.length}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        rowsPerPage={rowsPerPage}
+                        rowsPerPageOptions={[20]}
+                        onRowsPerPageChange={() => {}}
+                    />
+                </Box>
+                <DialogActions>
+                    <Button onClick={onClose} color="primary">Chiudi</Button>
+                </DialogActions>
+            </Dialog>
+    );
 }

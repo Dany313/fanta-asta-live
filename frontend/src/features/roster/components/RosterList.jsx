@@ -14,11 +14,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import Box from '@mui/material/Box';
 import PlayerTable from '../../../components/PlayerTable';
-import Drawer from '@mui/material/Drawer';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
 
 // Definiamo la struttura della rosa e i colori per ogni ruolo
 const ROSTER_CONFIG = {
@@ -36,7 +32,6 @@ const RosterList = ({ players, allPlayers, onAdd, onUpdate, onDelete }) => {
     const [selectedPlayer, setSelectedPlayer] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [roleToAdd, setRoleToAdd] = useState(null);
-    const [searchQuery, setSearchQuery] = useState('');
 
     const handleMenuClick = (event, player) => {
         setAnchorEl(event.currentTarget);
@@ -50,7 +45,6 @@ const RosterList = ({ players, allPlayers, onAdd, onUpdate, onDelete }) => {
 
     const handleOpenModal = (role) => {
         setRoleToAdd(role);
-        setSearchQuery('');
         setIsModalOpen(true);
     };
 
@@ -73,11 +67,6 @@ const RosterList = ({ players, allPlayers, onAdd, onUpdate, onDelete }) => {
         acc[role].push(player);
         return acc;
     }, {});
-
-    const availablePlayers = allPlayers.filter(p => 
-        p.role === roleToAdd && 
-        p.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
 
     return (
         <>
@@ -141,33 +130,14 @@ const RosterList = ({ players, allPlayers, onAdd, onUpdate, onDelete }) => {
                     </Button>
                 </MenuItem>
             </Menu>
-            <Drawer
-                anchor="right"
-                open={isModalOpen}
-                onClose={handleCloseModal}
-            >
-                <Box sx={{ width: 450, p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <Typography variant="h5" gutterBottom>
-                        Aggiungi Giocatore ({roleToAdd})
-                    </Typography>
-                    <TextField
-                        label="Cerca per nome"
-                        variant="outlined"
-                        fullWidth
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        sx={{ mb: 2 }}
-                    />
-                    <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
-                        <PlayerTable
-                            players={availablePlayers}
-                            onPlayerClick={handlePlayerSelect}
-                            buttonText="Aggiungi"
-                            buttonVariant="contained"
-                        />
-                    </Box>
-                </Box>
-            </Drawer>
+            {isModalOpen && (
+                <PlayerTable
+                    open={isModalOpen}
+                    onClose={handleCloseModal}
+                    players={allPlayers.filter(p => p.role === roleToAdd)}
+                    onPlayerClick={handlePlayerSelect}
+                />
+            )}
         </>
     );
 };
