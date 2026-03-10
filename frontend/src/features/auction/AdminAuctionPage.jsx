@@ -1,39 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { io } from 'socket.io-client';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CustomButton from '../../components/CustomButton';
 import PlayerTable from '../../components/PlayerTable';
 import PlayerCard from './components/PlayerCard';
 import BidPanel from './components/BidPanel'; // 🌟 IMPORTATO
 import AuctionLog from './components/AuctionLog'; // 🌟 IMPORTATO
 
-import Button from '@mui/material/Button';
-import ButtonGroup from '@mui/material/ButtonGroup';
-import Drawer from '@mui/material/Drawer';
-import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
-import InputLabel from '@mui/material/InputLabel';
-import FormControl from '@mui/material/FormControl';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InvitePanel from './components/InvitePanel'; // 🌟 IMPORTATO
 import LeagueManagement from '../admin/LeagueManagement';
-import * as api from '../../api';
-import RosterList from '../roster/components/RosterList'; // 🌟 IMPORTATO PER GESTIONE ROSE
+
 
 // Architettura Nuova
-import { usePlayers, useTeams, useSetupStatus } from '../../api/queries';
 import { useAuctionStore } from '../../store/useAuctionStore';
 import { useAuctionSocket } from '../../hooks/useAuctionSocket';
+import { useQuery } from '@tanstack/react-query';
+import { getPlayers } from '../../api/playersApi';
+import axios from 'axios';
+import api from '../../api/api';
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
-    
+
     // 1. Inizializza i WebSockets
     const socket = useAuctionSocket();
 
@@ -41,9 +28,29 @@ export default function AdminDashboard() {
     const activeAuction = useAuctionStore((state) => state.activeAuction);
 
     // 3. Server State (TanStack Query fa tutto da solo)
-    const { data: players = [], isLoading: loadingPlayers } = usePlayers();
-    const { data: teams = [] } = useTeams();
-    const { data: isSetupComplete = false } = useSetupStatus();
+    const { data: players = [], isLoading: loadingPlayers } = useQuery({
+        queryKey: ['players'],
+        queryFn: getPlayers,
+        select: (data) => data.filter(player => !roster.some(r => r.player_id === player.id)) // Filtra i giocatori già nel roster
+    });
+    const { data: teams = [] } = useQuery({
+        queryKey: ['teams'],
+        queryFn: async () => {
+            const { data } = await axios.get('http://localhost:3000/api/teams');
+            return data;
+        }
+    });
+    const { data: isSetupComplete = false } = useQuery({
+        queryKey: ['setupStatus'],
+        queryFn: async () => {
+            const leaguesRes = await api.getLeagues();
+            if (leaguesRes.data.length > 0) {
+                const teamsRes = await api.getTeams(leaguesRes.data[0].id);
+                return teamsRes.data.length > 0;
+            }
+            return false;
+        }
+    });
 
     // 4. Client State (Solo cose visive)
     const [searchTerm, setSearchTerm] = useState("");
@@ -60,7 +67,7 @@ export default function AdminDashboard() {
     const handleAdminBid = (amount) => {
         const adminTeamId = localStorage.getItem('adminTeamId');
         if (!adminTeamId) return alert("Seleziona prima una squadra!");
-        
+
         const teamName = teams.find(t => t.id === Number(adminTeamId))?.name;
         socket.emit('place_bid', { teamId: Number(adminTeamId), teamName, amount });
     };
