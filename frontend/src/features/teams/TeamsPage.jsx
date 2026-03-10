@@ -28,6 +28,11 @@ const style = {
     p: 4,
 };
 
+//ALTER TABLE teams DROP CONSTRAINT teams_league_id_key;
+//ALTER TABLE teams ADD CONSTRAINT teams_league_id_name_unique UNIQUE (league_id, name);
+
+
+
 const TeamsPage = () => {
 
     const { leagueId } = useParams();
@@ -44,7 +49,7 @@ const TeamsPage = () => {
     const { mutate: postMutation } = useMutation({
         mutationFn: postTeam,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['teams'] });
+            queryClient.invalidateQueries({ queryKey: ['teams', leagueId] });
             handleClose();
         },
         onError: (error) => {
@@ -57,7 +62,7 @@ const TeamsPage = () => {
     const { mutate: putMutation } = useMutation({
         mutationFn: putTeam,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['teams'] });
+            queryClient.invalidateQueries({ queryKey: ['teams', leagueId] });
             handleClose();
         },
         onError: (error) => {
@@ -70,7 +75,7 @@ const TeamsPage = () => {
     const { mutate: deleteMutation } = useMutation({
         mutationFn: delTeam,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['teams'] });
+            queryClient.invalidateQueries({ queryKey: ['teams', leagueId] });
         },
         onError: (error) => {
             console.error("Errore", error);
@@ -98,7 +103,7 @@ const TeamsPage = () => {
             return;
         }
         if (window.confirm(`Vuoi davvero creare la squadra: ${newTeamName}?`)) {
-            postMutation(newTeamName);
+            postMutation({ teamName: newTeamName, leagueId: Number(leagueId) });
         }
     };
 

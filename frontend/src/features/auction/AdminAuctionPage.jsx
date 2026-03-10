@@ -10,15 +10,15 @@ import InvitePanel from './components/InvitePanel'; // 🌟 IMPORTATO
 import LeagueManagement from '../admin/LeagueManagement';
 
 
-// Architettura Nuova
+import { useParams } from 'react-router-dom';
 import { useAuctionStore } from '../../store/useAuctionStore';
 import { useAuctionSocket } from '../../hooks/useAuctionSocket';
 import { useQuery } from '@tanstack/react-query';
 import { getPlayers } from '../../api/playersApi';
 import axios from 'axios';
-import api from '../../api/api';
 
 export default function AdminDashboard() {
+    const { leagueId } = useParams();
     const navigate = useNavigate();
 
     // 1. Inizializza i WebSockets
@@ -26,6 +26,15 @@ export default function AdminDashboard() {
 
     // 2. Leggi lo stato in tempo reale da Zustand
     const activeAuction = useAuctionStore((state) => state.activeAuction);
+
+    const {data: roster = []} = useQuery({
+        queryKey: ['roster'],
+        queryFn: async () => {
+            const { data } = await axios.get('http://localhost:3000/api/rosters/league/' + leagueId);
+            return data;
+        }
+    });
+
 
     // 3. Server State (TanStack Query fa tutto da solo)
     const { data: players = [], isLoading: loadingPlayers } = useQuery({
@@ -36,31 +45,26 @@ export default function AdminDashboard() {
     const { data: teams = [] } = useQuery({
         queryKey: ['teams'],
         queryFn: async () => {
-            const { data } = await axios.get('http://localhost:3000/api/teams');
+            const { data } = await axios.get('http://localhost:3000/api/teams?leagueId=' + leagueId);
             return data;
         }
     });
     const { data: isSetupComplete = false } = useQuery({
         queryKey: ['setupStatus'],
         queryFn: async () => {
-            const leaguesRes = await api.getLeagues();
-            if (leaguesRes.data.length > 0) {
-                const teamsRes = await api.getTeams(leaguesRes.data[0].id);
-                return teamsRes.data.length > 0;
-            }
-            return false;
+            // const leaguesRes = await api.getLeagues();
+            // if (leaguesRes.data.length > 0) {
+            //     const teamsRes = await api.getTeams(leaguesRes.data[0].id);
+            //     return teamsRes.data.length > 0;
+            // }
+            // return false;
+            return true;
         }
     });
 
     // 4. Client State (Solo cose visive)
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState('');
-
-    // --- AZIONI ---
-    const handleLogout = () => {
-        localStorage.removeItem('adminToken');
-        navigate('/login');
-    };
 
     const handleStartAuction = (player) => socket.emit('start_auction', player);
 

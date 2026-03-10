@@ -28,7 +28,7 @@ interface AddPlayerData {
 export const getRoster = async (team_id: number): Promise<Roster[]> => {
     const token = localStorage.getItem('adminToken');
     const headers = { Authorization: `Bearer ${token}` };
-    const response = await fetch(`http://localhost:3000/api/rosters?teamId=${team_id}`, { headers });
+    const response = await fetch(`http://localhost:3000/api/rosters/team/${team_id}`, { headers });
     if (!response.ok) throw new Error('Errore nel recupero dei giocatori');
     return response.json();
 };
