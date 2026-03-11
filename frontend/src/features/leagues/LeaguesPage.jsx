@@ -1,165 +1,97 @@
-import Button from '@mui/material/Button';
-import React, { useState, useEffect, use } from 'react';
-import axios from 'axios';
-import LeagueCard from './components/LeagueCard';
-import AddLeaguePanel from './components/AddLeaguePanel';
-import Modal from '@mui/material/Modal';
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import AddIcon from '@mui/icons-material/Add';
-import Stack from '@mui/material/Stack';
-import Grid from '@mui/material/Grid';
-import UpdateLeaguePanel from './components/UpdateLeaguePanel';
-import { useNavigate } from 'react-router-dom';
-import { getLeagues, postLeague, putLeague, delLeague } from '../../api/leaguesApi'; // Usa il nuovo hook per le leghe
+import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Box, Typography, Paper, CircularProgress } from '@mui/material';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
+import LeaguesList from './components/LeaguesList';
+import { getLeagues, postLeague, putLeague, delLeague } from '../../api/leaguesApi';
 
-
-
-const style = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 400,
-    bgcolor: 'background.paper',
-    border: '2px solid #000',
-    boxShadow: 24,
-    p: 4,
+const styles = {
+    container: {
+        padding: '20px',
+        fontFamily: 'Arial',
+        maxWidth: '1200px',
+        margin: '0 auto',
+    },
+    headerPaper: {
+        padding: '20px',
+        marginBottom: '30px',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '15px',
+        borderLeft: '5px solid #f1c40f' // Giallo per i trofei/leghe
+    },
+    headerTitle: {
+        fontWeight: 'bold',
+        color: '#2f3542',
+        textTransform: 'uppercase',
+        letterSpacing: '1px'
+    },
+    loadingContainer: {
+        display: 'flex', 
+        justifyContent: 'center', 
+        padding: '50px'
+    }
 };
 
 const LeaguesPage = () => {
     const queryClient = useQueryClient();
 
-    //Queries
+    // Queries
     const { data: leagues = [], isLoading: loading } = useQuery({
         queryKey: ['leagues'],
         queryFn: getLeagues
     });
 
     // Mutations
-    const { mutate: postMutation } = useMutation({
+    const { mutate: createLeague } = useMutation({
         mutationFn: postLeague,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['leagues'] });
-            handleClose();
-        },
-        onError: (error) => {
-            console.error("Errore", error);
-            if (error.response && error.response.status === 401) handleLogout();
-            else alert("Errore durante la creazione");
-        }
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['leagues'] }),
+        onError: (error) => alert(`Errore creazione: ${error.message}`)
     });
 
-    const { mutate: putMutation } = useMutation({
-        mutationFn: putLeague,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['leagues'] });
-            handleClose();
-        },
-        onError: (error) => {
-            console.error("Errore", error);
-            if (error.response && error.response.status === 401) handleLogout();
-            else alert("Errore durante la modfica");
-        }
+    const { mutate: updateLeague } = useMutation({
+        mutationFn: async ({ id, name }) => putLeague({ id, leaguename: name }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['leagues'] }),
+        onError: (error) => alert(`Errore modifica: ${error.message}`)
     });
 
-    const { mutate: deleteMutation } = useMutation({
+    const { mutate: removeLeague } = useMutation({
         mutationFn: delLeague,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['leagues'] });
-        },
-        onError: (error) => {
-            console.error("Errore", error);
-            if (error.response && error.response.status === 401) handleLogout();
-            else alert("Errore durante la cancellazione");
-        }
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['leagues'] }),
+        onError: (error) => alert(`Errore cancellazione: ${error.message}`)
     });
 
-
-    const [openAdd, setOpenAdd] = React.useState(false);
-    const [editingLeague, setEditingLeague] = useState(null); // Stato per la lega in modifica
-
-    const handleOpenAdd = () => setOpenAdd(true);
-    const handleClose = () => {
-        setOpenAdd(false);
-        setEditingLeague(null);
-    };
-
-    const addLeague = (newLeagueName) => {
-        if (!newLeagueName || newLeagueName.trim() === '') {
-            alert("Inserire un nome valido per la lega");
-            return;
-        }
-        if (window.confirm(`Vuoi davvero creare la lega: ${newLeagueName}?`)) {
-            postMutation(newLeagueName);
-        }
-    };
-
-    const deleteLeague = (leagueId) => {
-        if (window.confirm(`Vuoi davvero eliminare la lega e tutti i partecipanti?`)) {
-            deleteMutation(leagueId);
-        }
-    };
-
-    const updateLeague = (newLeagueName) => {
-        if (!newLeagueName || newLeagueName.trim() === '') {
-            alert("Inserire un nome valido per la lega");
-            return;
-        }
-        if (window.confirm(`Vuoi davvero modificare la lega?`)) {
-            if (!editingLeague) return;
-            putMutation({ id: editingLeague.id, leaguename: newLeagueName });
-        }
-    };
     return (
-        <div>
-            <Stack direction="row" alignItems="center" spacing={1}>
-                <h2>Gestione Leghe</h2>
-                <IconButton color="primary" aria-label="add" onClick={handleOpenAdd}>
-                    <AddIcon />
-                </IconButton>
-            </Stack>
-            <Modal
-                open={openAdd}
-                onClose={handleClose}
-                aria-labelledby="modal-title"
-                aria-describedby="modal-description"
-            >
-                <Box sx={style}>
-                    <AddLeaguePanel onClick={addLeague} />
+        <Box style={styles.container}>
+            <Paper style={styles.headerPaper} elevation={0}>
+                <EmojiEventsIcon style={{ fontSize: 40, color: '#f1c40f' }} />
+                <Box>
+                    <Typography variant="h5" style={styles.headerTitle}>
+                        Le Tue Leghe
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                        Gestisci le competizioni e le squadre
+                    </Typography>
                 </Box>
-            </Modal>
-            {/* Modal per Modificare (fuori dal loop) */}
-            <Modal
-                open={!!editingLeague}
-                onClose={handleClose}
-                aria-labelledby="modal-title"
-                aria-describedby="modal-description"
-            >
-                <Box sx={style}>
-                    <UpdateLeaguePanel oldName={editingLeague?.name} onClick={updateLeague} />
+            </Paper>
+
+            {loading ? (
+                <Box style={styles.loadingContainer}>
+                    <CircularProgress />
                 </Box>
-            </Modal>
-
-            <div>
-                {loading ? <p>Caricamento leghe...</p> : leagues.length > 0 ? (
-                    <Box component="section" sx={{ p: 2 }}>
-                        <Grid container spacing={2}>
-                            {leagues.map(league => (
-                                <Grid item key={league.id}>
-                                    <LeagueCard id={league.id} name={league.name} onDelete={deleteLeague} onUpdate={() => setEditingLeague(league)} />
-                                </Grid>
-                            ))}
-                        </Grid>
-                    </Box>
-                ) : (
-                    <p>Nessuna lega trovata. Creane una!</p>
-                )}
-            </div>
-
-        </div>
+            ) : (
+                <LeaguesList
+                    leagues={leagues}
+                    onAdd={createLeague}
+                    onUpdate={updateLeague}
+                    onDelete={removeLeague}
+                />
+            )}
+        </Box>
     );
 };
 

@@ -1,177 +1,128 @@
-import Button from '@mui/material/Button';
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import TeamCard from './components/TeamCard';
-import AddTeamPanel from './components/AddTeamPanel';
-import Modal from '@mui/material/Modal';
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import AddIcon from '@mui/icons-material/Add';
-import Stack from '@mui/material/Stack';
-import Grid from '@mui/material/Grid';
-import UpdateTeamPanel from './components/UpdateTeamPanel';
+import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getTeams, postTeam, putTeam, delTeam } from '../../api/teamsApi'; // Usa il nuovo hook per le leghe
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Box, Typography, Paper, CircularProgress, Button } from '@mui/material';
+import GroupsIcon from '@mui/icons-material/Groups';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
+import TeamsList from './components/TeamsList';
+import { getTeams, postTeam, putTeam, delTeam } from '../../api/teamsApi'; // Usa il nuovo hook per le leghe
 
-
-const style = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 400,
-    bgcolor: 'background.paper',
-    border: '2px solid #000',
-    boxShadow: 24,
-    p: 4,
+const styles = {
+    container: {
+        padding: '20px',
+        fontFamily: 'Arial',
+        maxWidth: '1200px',
+        margin: '0 auto',
+    },
+    headerPaper: {
+        padding: '20px',
+        marginBottom: '30px',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderLeft: '5px solid #3498db'
+    },
+    headerTitleBox: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '15px'
+    },
+    headerTitle: {
+        fontWeight: 'bold',
+        color: '#2f3542',
+        textTransform: 'uppercase',
+        letterSpacing: '1px'
+    },
+    loadingContainer: {
+        display: 'flex', 
+        justifyContent: 'center', 
+        padding: '50px'
+    },
+    auctionButton: {
+        fontWeight: 'bold',
+        textTransform: 'none',
+        borderRadius: '8px',
+        padding: '8px 20px'
+    }
 };
 
-//ALTER TABLE teams DROP CONSTRAINT teams_league_id_key;
-//ALTER TABLE teams ADD CONSTRAINT teams_league_id_name_unique UNIQUE (league_id, name);
-
-
-
 const TeamsPage = () => {
-
+    const navigate = useNavigate();
     const { leagueId } = useParams();
-
     const queryClient = useQueryClient();
 
-    //Queries
+    // Queries
     const { data: teams = [], isLoading: loading } = useQuery({
         queryKey: ['teams', leagueId],
         queryFn: () => getTeams(leagueId)
     });
 
     // Mutations
-    const { mutate: postMutation } = useMutation({
-        mutationFn: postTeam,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['teams', leagueId] });
-            handleClose();
-        },
-        onError: (error) => {
-            console.error("Errore", error);
-            if (error.response && error.response.status === 401) handleLogout();
-            else alert("Errore durante la creazione");
-        }
+    const { mutate: createTeam } = useMutation({
+        mutationFn: async (name) => postTeam({ teamName: name, leagueId: Number(leagueId) }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teams', leagueId] }),
+        onError: (error) => alert(`Errore creazione: ${error.message}`)
     });
 
-    const { mutate: putMutation } = useMutation({
-        mutationFn: putTeam,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['teams', leagueId] });
-            handleClose();
-        },
-        onError: (error) => {
-            console.error("Errore", error);
-            if (error.response && error.response.status === 401) handleLogout();
-            else alert("Errore durante la modfica");
-        }
+    const { mutate: updateTeam } = useMutation({
+        mutationFn: async ({ id, name }) => putTeam({ id, teamname: name }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teams', leagueId] }),
+        onError: (error) => alert(`Errore modifica: ${error.message}`)
     });
 
-    const { mutate: deleteMutation } = useMutation({
+    const { mutate: removeTeam } = useMutation({
         mutationFn: delTeam,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['teams', leagueId] });
-        },
-        onError: (error) => {
-            console.error("Errore", error);
-            if (error.response && error.response.status === 401) handleLogout();
-            else alert("Errore durante la cancellazione");
-        }
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teams', leagueId] }),
+        onError: (error) => alert(`Errore cancellazione: ${error.message}`)
     });
 
-
-    const [openAdd, setOpenAdd] = useState(false);
-    const [editingTeam, setEditingTeam] = useState(null);
-    const navigate = useNavigate();
-
-    const handleOpenAdd = () => setOpenAdd(true);
-    const handleClose = () => {
-        setOpenAdd(false);
-        setEditingTeam(null);
+    const handleStartAuction = () => {
+        localStorage.removeItem('adminTeamId');
+        navigate(`/auction/${leagueId}`);
     };
 
-
-
-    const createTeam = async (newTeamName) => {
-        if (!newTeamName || newTeamName.trim() === '') {
-            alert("Inserire un nome valido per la squadra");
-            return;
-        }
-        if (window.confirm(`Vuoi davvero creare la squadra: ${newTeamName}?`)) {
-            postMutation({ teamName: newTeamName, leagueId: Number(leagueId) });
-        }
-    };
-
-    const deleteTeam = async (teamId) => {
-        if (window.confirm(`Vuoi davvero eliminare la squadra e tutti i partecipanti?`)) {
-            deleteMutation(teamId);
-        }
-    };
-
-    const updateTeam = async (newTeamName) => {
-        if (!newTeamName || newTeamName.trim() === '') {
-            alert("Inserire un nome valido per la squadra");
-            return;
-        }
-        if (window.confirm(`Vuoi davvero modificare la squadra?`)) {
-            putMutation({ id: editingTeam.id, teamname: newTeamName });
-        }
-    };
     return (
-        <div>
-            <Stack direction="row" justifyContent='space-between' alignItems="center" spacing={1}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                    <h2>Gestione Partecipanti</h2>
-                    <IconButton color="primary" aria-label="add" onClick={handleOpenAdd}>
-                        <AddIcon />
-                    </IconButton>
-                </Stack>
-                <Button variant="outlined" color="secondary" onClick={() => { navigate(`/auction/${leagueId}`); localStorage.removeItem('adminTeamId'); }}>Avvia Asta</Button>
-            </Stack>
-            <Modal
-                open={openAdd}
-                onClose={handleClose}
-                aria-labelledby="modal-title"
-                aria-describedby="modal-description"
-            >
-                <Box sx={style}>
-                    <AddTeamPanel onClick={createTeam} />
-                </Box>
-            </Modal>
-            {/* Modal per Modificare (fuori dal loop) */}
-            <Modal
-                open={!!editingTeam}
-                onClose={handleClose}
-                aria-labelledby="modal-title"
-                aria-describedby="modal-description"
-            >
-                <Box sx={style}>
-                    <UpdateTeamPanel oldName={editingTeam?.name} onClick={updateTeam} />
-                </Box>
-            </Modal>
-
-            <div>
-                {loading ? <p>Caricamento squadre...</p> : teams.length > 0 ? (
-                    <Box component="section" sx={{ p: 2 }}>
-                        <Grid container spacing={2}>
-                            {teams.map(team => (
-                                <Grid item key={team.id}>
-                                    <TeamCard id={team.id} name={team.name} onDelete={deleteTeam} onUpdate={() => setEditingTeam(team)} />
-                                </Grid>
-                            ))}
-                        </Grid>
+        <Box style={styles.container}>
+            <Paper style={styles.headerPaper} elevation={0}>
+                <Box style={styles.headerTitleBox}>
+                    <GroupsIcon style={{ fontSize: 40, color: '#3498db' }} />
+                    <Box>
+                        <Typography variant="h5" style={styles.headerTitle}>
+                            Squadre & Partecipanti
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                            Lega ID: {leagueId}
+                        </Typography>
                     </Box>
-                ) : (
-                    <p>Nessuna squadra trovata. Creane una!</p>
-                )}
-            </div>
+                </Box>
+                <Button 
+                    variant="contained" 
+                    color="secondary" 
+                    startIcon={<PlayArrowIcon />}
+                    onClick={handleStartAuction}
+                    style={styles.auctionButton}
+                >
+                    Avvia Asta
+                </Button>
+            </Paper>
 
-        </div>
+            {loading ? (
+                <Box style={styles.loadingContainer}>
+                    <CircularProgress />
+                </Box>
+            ) : (
+                <TeamsList
+                    teams={teams}
+                    onAdd={createTeam}
+                    onUpdate={updateTeam}
+                    onDelete={removeTeam}
+                />
+            )}
+        </Box>
     );
 };
 
