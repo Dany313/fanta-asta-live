@@ -1,10 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Importiamo le Pagine
-// import AdminDashboard from './features/admin/AdminDashboard';
 // import AdminLogin from './features/admin/AdminLogin';
-// import ViewerBoard from './features/viewer/ViewerBoard';
-// import JoinViewer from './features/viewer/JoinViewer';
 
 // Importiamo i Componenti globali
 import Navbar from './components/Navbar';
@@ -13,6 +10,8 @@ import TeamsPage from './features/teams/TeamsPage';
 import RosterPage from './features/roster/RosterPage';
 import AdminAuctionPage from './features/auction/AdminAuctionPage';
 import SelectAdminTeamPage from './features/auction/SelectAdminTeamPage';
+import ViewerAuctionPage from './features/auction/ViewerAuctionPage';
+import JoinViewer from './features/auction/JoinViewer';
 
 // Le nostre "Guardie" per proteggere le rotte
 const ProtectedAdminRoute = ({ children }) => {
@@ -75,13 +74,13 @@ function App() {
             </ProtectedAdminRoute>
           } />
           
-          {/* <Route path="/join/:token" element={<JoinViewer />} /> */}
+          <Route path="/join/:token" element={<JoinViewer />} /> 
           
-          {/* <Route path="/viewer" element={
+          <Route path="/viewer" element={
             <ProtectedViewerRoute>
-              <ViewerBoard />
+              <ViewerAuctionPage />
             </ProtectedViewerRoute>
-          } /> */}
+          } />
           
           {/* <Route path="/" element={
             <div style={{ textAlign: 'center', marginTop: '50px' }}>

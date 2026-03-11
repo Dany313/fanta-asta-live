@@ -50,7 +50,7 @@ exports.deleteTeam = async (req, res) => {
 exports.verifyToken = async (req, res) => {
   try {
     const { token } = req.params;
-    const result = await db.query(`SELECT id, name FROM teams WHERE invite_token = $1`, [token]);
+    const result = await db.query(`SELECT id, name, league_id FROM teams WHERE invite_token = $1`, [token]);
     if (result.rows.length === 0) return res.status(404).json({ success: false, message: 'Link non valido.' });
 
     // Qui restituiamo l'entity completa (o quasi) perché è il login della squadra stessa
