@@ -20,8 +20,8 @@ module.exports = (io, socket) => {
     }
   });
 
-  // 1. INIZIO ASTA
-  socket.on('start_auction', async (playerData) => {
+  // 1a. INIZIO ASTA ADMIN (Offerta iniziale 0)
+  socket.on('start_auction_admin', async (playerData) => {
     try {
       const teamsQuery = await db.query(`SELECT id, name, remaining_budget, max_possible_bid FROM teams`);
       const teams = teamsQuery.rows.map(TeamMapper.toEntity);
@@ -47,9 +47,52 @@ module.exports = (io, socket) => {
         activeAuction.history
       );
       io.emit('auction_started', stateDto);
-      console.log(`🔨 Asta iniziata per ${playerData.name}`);
+      console.log(`🔨 Asta iniziata (Admin) per ${playerData.name}`);
     } catch (error) {
-      console.error("Errore avvio asta:", error);
+      console.error("Errore avvio asta Admin:", error);
+    }
+  });
+
+  // 1b. INIZIO ASTA VIEWER (Offerta iniziale 1)
+  socket.on('start_auction_viewer', async ({ player, teamId, teamName }) => {
+    try {
+      const teamsQuery = await db.query(`SELECT id, name, remaining_budget, max_possible_bid FROM teams`);
+      const teams = teamsQuery.rows.map(TeamMapper.toEntity);
+      
+      const budgets = {};
+      const maxBids = {};
+      
+      teams.forEach(t => {
+        budgets[t.id] = t.remainingBudget;
+        maxBids[t.id] = t.maxPossibleBid;
+      });
+
+      // Reset e inizializzazione stato
+      resetAuction();
+      activeAuction.player = player;
+      activeAuction.teamBudgets = budgets;
+      activeAuction.maxPossibleBids = maxBids;
+
+      // Imposta offerta automatica a 1 per il viewer
+      activeAuction.highestBid = 1;
+      activeAuction.highestBidderId = Number(teamId);
+      activeAuction.highestBidderName = teamName;
+      activeAuction.history.unshift({
+        teamName: teamName,
+        amount: 1,
+        time: new Date().toLocaleTimeString('it-IT')
+      });
+
+      const stateDto = new AuctionStateDto(
+        activeAuction.player, 
+        activeAuction.highestBid, 
+        activeAuction.highestBidderName, 
+        activeAuction.history
+      );
+      io.emit('auction_started', stateDto);
+      console.log(`🔨 Asta iniziata (Viewer) per ${player.name} da ${teamName}`);
+    } catch (error) {
+      console.error("Errore avvio asta Viewer:", error);
     }
   });
 
@@ -154,5 +197,22 @@ module.exports = (io, socket) => {
       console.error(error);
       socket.emit('assign_error', { message: 'Errore durante il salvataggio!' });
     }
+  });
+
+  // 4. ANNULLAMENTO ASTA
+  socket.on('abort_auction', () => {
+    if (activeAuction.player) {
+      const player = activeAuction.player;
+      resetAuction();
+      io.emit('auction_aborted');
+      console.log(`⛔ Asta annullata per ${player.name} da Admin`);
+    }
+  });
+
+  // 5. CONCLUSIONE ASTA (Reset forzato)
+  socket.on('auction_end', () => {
+    resetAuction();
+    io.emit('auction_aborted'); // Notifica anche i client per allinearli
+    console.log("🛑 Asta conclusa manualmente dall'Admin");
   });
 };

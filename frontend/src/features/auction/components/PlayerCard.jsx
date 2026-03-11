@@ -77,7 +77,7 @@ const styles = {
     }
 };
 
-export default function PlayerCard({ player, currentBid, onBid, title = "🔨 ASTA IN CORSO" }) {
+export default function PlayerCard({ player, currentBid, onBid }) {
     const [customBid, setCustomBid] = useState('');
 
     if (!player) return null;
@@ -98,7 +98,7 @@ export default function PlayerCard({ player, currentBid, onBid, title = "🔨 AS
     return (
         <Paper style={styles.container} elevation={0}>
             <Typography variant="subtitle2" style={styles.header}>
-                {title}
+                🔨 ASTA IN CORSO
             </Typography>
 
             <Box display="flex" justifyContent="center" alignItems="center" flexDirection="column" flex={1}>

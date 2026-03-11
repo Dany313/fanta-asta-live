@@ -5,6 +5,8 @@ import PlayerCard from './components/PlayerCard';
 import AuctionLog from './components/AuctionLog'; // 🌟 IMPORTATO
 import Button from '@mui/material/Button';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
+import CancelIcon from '@mui/icons-material/Cancel';
+import StopIcon from '@mui/icons-material/Stop';
 
 import InvitePanel from './components/InvitePanel'; // 🌟 IMPORTATO
 
@@ -36,6 +38,16 @@ export default function AdminDashboard() {
     // 2. Leggi lo stato in tempo reale da Zustand
     const activeAuction = useAuctionStore((state) => state.activeAuction);
 
+    useEffect(() => {
+        if (socket) {
+            const handleAbort = () => {
+                useAuctionStore.setState({ activeAuction: {} });
+            };
+            socket.on('auction_aborted', handleAbort);
+            return () => socket.off('auction_aborted', handleAbort);
+        }
+    }, [socket]);
+
     const { data: roster = [] } = useQuery({
         queryKey: ['roster', leagueId],
         queryFn: () => getRosterByLeague(leagueId)
@@ -58,7 +70,7 @@ export default function AdminDashboard() {
     const [roleFilter, setRoleFilter] = useState('');
     const [isListoneOpen, setListoneOpen] = useState(false);
 
-    const handleStartAuction = (player) => socket.emit('start_auction', player);
+    const handleStartAuction = (player) => socket.emit('start_auction_admin', player);
 
     const handleAdminBid = (teamId_, amount) => {
 
@@ -76,6 +88,22 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleAbort = () => {
+        if (window.confirm(`Sei sicuro di voler annullare l'asta per ${activeAuction.player.name}?`)) {
+            socket.emit('abort_auction');
+        }
+    };
+
+    const handleEndAuction = () => {
+        if (window.confirm("Sei sicuro di voler concludere l'asta in corso?")) {
+            socket.emit('auction_end');
+            useAuctionStore.setState({ activeAuction: {} });
+            navigate(`/`);
+                        // navigate(`/league/${leagueId}`);
+
+        }
+    };
+
     const filteredPlayers = players.filter(player => {
         const nameMatch = player.name.toLowerCase().includes(searchTerm.toLowerCase());
         const roleMatch = !roleFilter || player.role.toUpperCase() === roleFilter.toUpperCase();
@@ -88,22 +116,40 @@ export default function AdminDashboard() {
 
             <Stack direction="row" justifyContent="space-between" alignItems="start" style={{ marginBottom: '30px' }}>
                 <InvitePanel teams={teams} />
-                <Button
-                    variant="contained"
-                    startIcon={<FormatListBulletedIcon />}
-                    onClick={() => setListoneOpen(true)}
-                    style={{
-                        backgroundColor: '#2ecc71',
-                        color: 'white',
-                        fontWeight: 'bold',
-                        textTransform: 'none',
-                        borderRadius: '8px',
-                        padding: '10px 20px',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                    }}
-                >
-                    Apri Listone
-                </Button>
+                <Stack direction="row" spacing={2}>
+                    <Button
+                        variant="contained"
+                        startIcon={<FormatListBulletedIcon />}
+                        onClick={() => setListoneOpen(true)}
+                        style={{
+                            backgroundColor: '#2ecc71',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            textTransform: 'none',
+                            borderRadius: '8px',
+                            padding: '10px 20px',
+                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                        }}
+                    >
+                        Apri Listone
+                    </Button>
+                    <Button
+                        variant="contained"
+                        startIcon={<StopIcon />}
+                        onClick={handleEndAuction}
+                        style={{
+                            backgroundColor: '#e74c3c',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            textTransform: 'none',
+                            borderRadius: '8px',
+                            padding: '10px 20px',
+                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                        }}
+                    >
+                        Concludi Asta
+                    </Button>
+                </Stack>
             </Stack>
 
             {/* SEZIONE ASTA */}
@@ -112,13 +158,21 @@ export default function AdminDashboard() {
                 <div style={{ marginBottom: '40px', position: 'relative' }}>
                     <AdminCustomBet teams={teams} handleCustomBet={handleAdminBid} />
                     <Stack direction="row" justifyContent="center" alignItems="stretch" spacing={4} marginBottom={3}>
-                        <Box flex={1} display="flex" flexDirection="column">
+                        <Box flex={1} display="flex" flexDirection="column" gap={2}>
                             <PlayerCard
                                 player={activeAuction.player}
                                 currentBid={activeAuction.highestBid}
                                 onBid={handleAdminBid}
-                                title="🔨 ASTA IN CORSO"
                             />
+                            <Button 
+                                variant="contained" 
+                                color="error" 
+                                startIcon={<CancelIcon />}
+                                onClick={handleAbort}
+                                fullWidth
+                            >
+                                Annulla Asta
+                            </Button>
                         </Box>
                         <Box flex={1} display="flex" flexDirection="column">
                             <AuctionLog history={activeAuction.history} />

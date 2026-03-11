@@ -38,6 +38,16 @@ export default function ViewerDashboard() {
     // 2. Leggi lo stato in tempo reale da Zustand
     const activeAuction = useAuctionStore((state) => state.activeAuction);
 
+    useEffect(() => {
+        if (socket) {
+            const handleAbort = () => {
+                useAuctionStore.setState({ activeAuction: {} });
+            };
+            socket.on('auction_aborted', handleAbort);
+            return () => socket.off('auction_aborted', handleAbort);
+        }
+    }, [socket]);
+
     const { data: roster = [] } = useQuery({
         queryKey: ['roster', leagueId],
         queryFn: () => getRosterByLeague(leagueId)
@@ -57,7 +67,11 @@ export default function ViewerDashboard() {
 
     const [isListoneOpen, setListoneOpen] = useState(false);
 
-    const handleStartAuction = (player) => socket.emit('start_auction', player);
+    const handleStartAuction = (player) => {
+        const teamId = localStorage.getItem('viewerTeamId');
+        const teamName = localStorage.getItem('viewerTeamName');
+        socket.emit('start_auction_viewer', { player, teamId, teamName });
+    };
 
     const handleBid = (teamId_, amount) => {
 
@@ -76,26 +90,27 @@ export default function ViewerDashboard() {
 
     return (
         <div style={{ padding: '20px', fontFamily: 'Arial' }}>
-            {/* ... Intestazione identica al tuo codice ... */}
 
-            <Stack direction="row" justifyContent="space-between" alignItems="start" style={{ marginBottom: '30px' }}>
-                <Button
-                    variant="contained"
-                    startIcon={<FormatListBulletedIcon />}
-                    onClick={() => setListoneOpen(true)}
-                    style={{
-                        backgroundColor: '#2ecc71',
-                        color: 'white',
-                        fontWeight: 'bold',
-                        textTransform: 'none',
-                        borderRadius: '8px',
-                        padding: '10px 20px',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                    }}
-                >
-                    Apri Listone
-                </Button>
-            </Stack>
+            {!activeAuction?.player && (
+                <Stack direction="row" justifyContent="space-between" alignItems="start" style={{ marginBottom: '30px' }}>
+                    <Button
+                        variant="contained"
+                        startIcon={<FormatListBulletedIcon />}
+                        onClick={() => setListoneOpen(true)}
+                        style={{
+                            backgroundColor: '#2ecc71',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            textTransform: 'none',
+                            borderRadius: '8px',
+                            padding: '10px 20px',
+                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                        }}
+                    >
+                        Apri Listone
+                    </Button>
+                </Stack>
+            )}
 
             {/* SEZIONE ASTA */}
             {activeAuction?.player && (
@@ -107,7 +122,6 @@ export default function ViewerDashboard() {
                                 player={activeAuction.player}
                                 currentBid={activeAuction.highestBid}
                                 onBid={handleBid}
-                                title="🔨 ASTA IN CORSO"
                             />
                         </Box>
                         <Box flex={1} display="flex" flexDirection="column">
