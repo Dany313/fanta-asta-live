@@ -12,6 +12,7 @@ import AdminAuctionPage from './features/auction/AdminAuctionPage';
 import SelectAdminTeamPage from './features/auction/SelectAdminTeamPage';
 import ViewerAuctionPage from './features/auction/ViewerAuctionPage';
 import JoinViewer from './features/auction/JoinViewer';
+import LoginPage from './features/login/LoginPage';
 
 // Le nostre "Guardie" per proteggere le rotte
 const ProtectedAdminRoute = ({ children }) => {
@@ -42,8 +43,10 @@ function App() {
       {/* Un contenitore generico per staccare i contenuti dalla navbar */}
       <div style={{ padding: '20px' }}>
         <Routes>
-          {/* <Route path="/login" element={<AdminLogin />} /> */}
-          
+          <Route path="/login" element={
+            <LoginPage />
+          } />
+
           <Route path="/" element={
             <ProtectedAdminRoute>
               <LeaguesPage />
@@ -73,15 +76,15 @@ function App() {
               <TeamsPage />
             </ProtectedAdminRoute>
           } />
-          
-          <Route path="/join/:token" element={<JoinViewer />} /> 
-          
+
+          <Route path="/join/:token" element={<JoinViewer />} />
+
           <Route path="/viewer" element={
             <ProtectedViewerRoute>
               <ViewerAuctionPage />
             </ProtectedViewerRoute>
           } />
-          
+
           {/* <Route path="/" element={
             <div style={{ textAlign: 'center', marginTop: '50px' }}>
               <h1>Benvenuto all'Asta del Fantacalcio! ⚽</h1>

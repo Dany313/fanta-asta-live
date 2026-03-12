@@ -26,17 +26,13 @@ interface AddPlayerData {
 
 // 1. Funzioni API pure (separate dagli hook)
 export const getRoster = async (team_id: number): Promise<Roster[]> => {
-    const token = localStorage.getItem('adminToken');
-    const headers = { Authorization: `Bearer ${token}` };
-    const response = await fetch(`http://localhost:3000/api/rosters/team/${team_id}`, { headers });
+    const response = await fetch(`http://localhost:3000/api/rosters/team/${team_id}`);
     if (!response.ok) throw new Error('Errore nel recupero dei giocatori');
     return response.json();
 };
 
 export const getRosterByLeague = async (league_id: number): Promise<Roster[]> => {
-    const token = localStorage.getItem('adminToken');
-    const headers = { Authorization: `Bearer ${token}` };
-    const response = await fetch(`http://localhost:3000/api/rosters/league/${league_id}`, { headers });
+    const response = await fetch(`http://localhost:3000/api/rosters/league/${league_id}`);
     if (!response.ok) throw new Error('Errore nel recupero dei giocatori');
     return response.json();
 };
@@ -54,7 +50,11 @@ export const addPlayerToRoster = async (data: AddPlayerData) => {
             purchasePrice: price
         })
     });
-    if (!response.ok) throw new Error('Errore nell\'aggiunta del giocatore al roster');
+    if (!response.ok) {
+        const error: any = new Error('Errore nell\'aggiunta del giocatore al roster');
+        error.response = { status: response.status };
+        throw error;
+    }
     return response.json();
 };
 
@@ -71,7 +71,11 @@ export const putPlayerPrice = async (data: ModifyPlayerPriceData) => {
             purchasePrice: price
         })
     });
-    if (!response.ok) throw new Error('Errore nell\'aggiunta del giocatore al roster');
+    if (!response.ok) {
+        const error: any = new Error('Errore nell\'aggiunta del giocatore al roster');
+        error.response = { status: response.status };
+        throw error;
+    }
     return response.json();
 };
 
@@ -87,6 +91,10 @@ export const removePlayerFromRoster = async (data: RemovePlayerData) => {
             playerId: player_id
         })
     });
-    if (!response.ok) throw new Error('Errore nella rimozione del giocatore dal roster');
+    if (!response.ok) {
+        const error: any = new Error('Errore nella rimozione del giocatore dal roster');
+        error.response = { status: response.status };
+        throw error;
+    }
     return response.json();
 };

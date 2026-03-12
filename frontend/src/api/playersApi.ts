@@ -8,10 +8,7 @@ interface Player {
 }
 
 export const getPlayers = async (): Promise<Player[]> => {
-    const token = localStorage.getItem('adminToken');
-    const response = await fetch('http://localhost:3000/api/players', {
-        headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await fetch('http://localhost:3000/api/players');
     if (!response.ok) throw new Error('Errore nel recupero dei giocatori');
     return response.json();
 };

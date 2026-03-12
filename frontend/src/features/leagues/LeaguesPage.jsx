@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Box, Typography, Paper, CircularProgress } from '@mui/material';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
@@ -38,6 +39,7 @@ const styles = {
 };
 
 const LeaguesPage = () => {
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
 
     // Queries
@@ -46,23 +48,32 @@ const LeaguesPage = () => {
         queryFn: getLeagues
     });
 
+    // Helper per gestire errori 401 e redirect al login
+    const handleMutationError = (error, actionContext) => {
+        if (error.response && error.response.status === 401) {
+            navigate('/login');
+        } else {
+            alert(`Errore ${actionContext}: ${error.message}`);
+        }
+    };
+
     // Mutations
     const { mutate: createLeague } = useMutation({
         mutationFn: postLeague,
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['leagues'] }),
-        onError: (error) => alert(`Errore creazione: ${error.message}`)
+        onError: (error) => handleMutationError(error, 'creazione')
     });
 
     const { mutate: updateLeague } = useMutation({
         mutationFn: async ({ id, name }) => putLeague({ id, leaguename: name }),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['leagues'] }),
-        onError: (error) => alert(`Errore modifica: ${error.message}`)
+        onError: (error) => handleMutationError(error, 'modifica')
     });
 
     const { mutate: removeLeague } = useMutation({
         mutationFn: delLeague,
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['leagues'] }),
-        onError: (error) => alert(`Errore cancellazione: ${error.message}`)
+        onError: (error) => handleMutationError(error, 'cancellazione')
     });
 
     return (

@@ -61,23 +61,32 @@ const TeamsPage = () => {
         queryFn: () => getTeams(leagueId)
     });
 
+    // Helper per gestire errori 401 e redirect al login
+    const handleMutationError = (error, actionContext) => {
+        if (error.response && error.response.status === 401) {
+            navigate('/login');
+        } else {
+            alert(`Errore ${actionContext}: ${error.message}`);
+        }
+    };
+
     // Mutations
     const { mutate: createTeam } = useMutation({
         mutationFn: async (name) => postTeam({ teamName: name, leagueId: Number(leagueId) }),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teams', leagueId] }),
-        onError: (error) => alert(`Errore creazione: ${error.message}`)
+        onError: (error) => handleMutationError(error, 'creazione')
     });
 
     const { mutate: updateTeam } = useMutation({
         mutationFn: async ({ id, name }) => putTeam({ id, teamname: name }),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teams', leagueId] }),
-        onError: (error) => alert(`Errore modifica: ${error.message}`)
+        onError: (error) => handleMutationError(error, 'modifica')
     });
 
     const { mutate: removeTeam } = useMutation({
         mutationFn: delTeam,
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teams', leagueId] }),
-        onError: (error) => alert(`Errore cancellazione: ${error.message}`)
+        onError: (error) => handleMutationError(error, 'cancellazione')
     });
 
     const handleStartAuction = () => {
