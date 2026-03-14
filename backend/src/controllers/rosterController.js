@@ -1,5 +1,7 @@
 const e = require('cors');
 const db = require('../config/db');
+const { assign_player_to_team } = require('../services/teamService');
+
 
 
 exports.getRostersByTeamId = async (req, res) => {
@@ -51,8 +53,8 @@ exports.updateRoster = async (req, res) => {
 exports.addToRoster = async (req, res) => {
   try {
     const { teamId, playerId, purchasePrice } = req.body;
-    const result = await db.query(`INSERT INTO rosters (team_id, player_id, purchase_price) VALUES ($1, $2, $3) RETURNING *`, [teamId, playerId, purchasePrice]);
-    res.json(result.rows[0]); // Restituiamo l'oggetto appena creato
+    const result = await assign_player_to_team(teamId, playerId, purchasePrice);
+    res.json(result); // Restituiamo l'oggetto appena creato
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

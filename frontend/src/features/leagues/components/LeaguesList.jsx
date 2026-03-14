@@ -102,9 +102,9 @@ export default function LeaguesList({ leagues, onAdd, onUpdate, onDelete }) {
                     <EmojiEventsIcon style={{ verticalAlign: 'middle', marginRight: '8px', color: '#7f8c8d' }} />
                     Elenco Competizioni
                 </Typography>
-                <Button 
-                    variant="contained" 
-                    color="primary" 
+                <Button
+                    variant="contained"
+                    color="primary"
                     startIcon={<AddCircleIcon />}
                     onClick={() => setOpenAdd(true)}
                     style={{ textTransform: 'none', fontWeight: 'bold' }}
@@ -119,7 +119,6 @@ export default function LeaguesList({ leagues, onAdd, onUpdate, onDelete }) {
                     <Table>
                         <TableHead style={styles.tableHead}>
                             <TableRow>
-                                <TableCell style={styles.tableHeadCell} width="50px">ID</TableCell>
                                 <TableCell style={styles.tableHeadCell}>Nome Lega</TableCell>
                                 <TableCell style={styles.tableHeadCell} align="right">Squadre</TableCell>
                                 <TableCell style={styles.tableHeadCell} align="center">Azioni</TableCell>
@@ -135,16 +134,15 @@ export default function LeaguesList({ leagues, onAdd, onUpdate, onDelete }) {
                             ) : (
                                 leagues.map((league) => (
                                     <TableRow key={league.id} hover>
-                                        <TableCell style={{ color: '#7f8c8d' }}>#{league.id}</TableCell>
                                         <TableCell>
                                             <Typography variant="subtitle1" style={{ fontWeight: 'bold', color: '#2f3542' }}>
                                                 {league.name}
                                             </Typography>
                                         </TableCell>
                                         <TableCell align="right">
-                                            <Button 
-                                                size="small" 
-                                                variant="outlined" 
+                                            <Button
+                                                size="small"
+                                                variant="outlined"
                                                 color="secondary"
                                                 endIcon={<ArrowForwardIcon />}
                                                 onClick={() => navigate(`/leagues/${league.id}`)}

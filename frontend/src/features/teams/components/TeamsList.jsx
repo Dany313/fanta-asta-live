@@ -125,7 +125,6 @@ export default function TeamsList({ teams, onAdd, onUpdate, onDelete }) {
                     <Table>
                         <TableHead style={styles.tableHead}>
                             <TableRow>
-                                <TableCell style={styles.tableHeadCell} width="50px">ID</TableCell>
                                 <TableCell style={styles.tableHeadCell}>Nome Squadra</TableCell>
                                 <TableCell style={styles.tableHeadCell} align="right">Budget Residuo</TableCell>
                                 <TableCell style={styles.tableHeadCell} align="center">Azioni</TableCell>
@@ -141,7 +140,6 @@ export default function TeamsList({ teams, onAdd, onUpdate, onDelete }) {
                             ) : (
                                 teams.map((team) => (
                                     <TableRow key={team.id} hover>
-                                        <TableCell style={{ color: '#7f8c8d' }}>#{team.id}</TableCell>
                                         <TableCell>
                                             <Typography variant="subtitle1" style={{ fontWeight: 'bold', color: '#2f3542' }}>
                                                 {team.name}
@@ -149,7 +147,7 @@ export default function TeamsList({ teams, onAdd, onUpdate, onDelete }) {
                                         </TableCell>
                                         <TableCell align="right">
                                             <Chip 
-                                                label={`${team.remaining_budget || 0} FM`} 
+                                                label={`${team.remainingBudget || 0} FM`} 
                                                 color="success" 
                                                 variant="outlined" 
                                                 size="small" 
