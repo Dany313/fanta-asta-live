@@ -1,6 +1,6 @@
 const e = require('cors');
 const db = require('../config/db');
-const { assign_player_to_team } = require('../services/teamService');
+const { assign_player_to_team, player_cost_update, delete_player_from_team } = require('../services/rosterService');
 
 
 
@@ -38,13 +38,8 @@ exports.getRostersByLeagueId = async (req, res) => {
 exports.updateRoster = async (req, res) => {
   try {
     const { teamId, playerId, purchasePrice } = req.body;
-
-    const result = await db.query(`UPDATE rosters SET purchase_price = $1 WHERE team_id = $2 AND player_id = $3  RETURNING *`, [purchasePrice, teamId, playerId]);
-    if (result.rowCount === 0) {
-      res.status(404).json({ message: 'Giocatore non trovato nel roster' });
-    } else {
-      res.status(200).json({ message: 'Roster aggiornato con successo' });
-    }
+    const result = await player_cost_update(teamId, playerId, purchasePrice);
+    res.json(result);
   } catch (error) {
     res.status(500).json({ error: 'Errore interno' });
   }
@@ -63,8 +58,8 @@ exports.addToRoster = async (req, res) => {
 exports.deleteFromRoster = async (req, res) => {
   try {
     const { teamId, playerId } = req.body;
-    await db.query(`DELETE FROM rosters WHERE team_id = $1 AND player_id = $2`, [teamId, playerId]);
-    res.json({ message: 'Giocatore rimosso dal roster con successo' });
+    const result = await delete_player_from_team(teamId, playerId);
+    res.json(result);
   } catch (error) {
     res.status(500).json({ error: 'Errore interno' });
   }
