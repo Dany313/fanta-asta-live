@@ -14,8 +14,8 @@ exports.getPlayers = async (req, res) => {
 
 exports.getPlayersForAuction = async (req, res) => {
   try {
-    const { LeagueId } = req.params;
-    const result = await playerService.getAvailablePlayersByLeagueId(LeagueId);
+    const { leagueId } = req.params;
+    const result = await playerService.getAvailablePlayersByLeagueId(leagueId);
     const players = result.rows.map(PlayerMapper.toEntity);
     res.json(players);
   } catch (error) {

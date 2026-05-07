@@ -3,10 +3,6 @@ const LeagueMapper = require('../mappers/LeagueMapper');
 
 exports.createLeague = async (req, res) => {
     const { name } = req.body;
-    if (!name) {
-        return res.status(400).json({ error: 'League name is required' });
-    }
-
     try {
         const result = await leagueService.createLeague(name);
         const newLeague = LeagueMapper.toEntity(result.rows[0]);
@@ -19,10 +15,6 @@ exports.createLeague = async (req, res) => {
 exports.updateLeague = async (req, res) => {
     const { id } = req.params;
     const { name } = req.body;
-    if (!name) {
-        return res.status(400).json({ error: 'League name is required' });
-    }
-
     try {
         const result = await leagueService.updateLeague(id, name);
         const updatedLeague = LeagueMapper.toEntity(result.rows[0]);
@@ -45,9 +37,6 @@ exports.getLeagues = async (req, res) => {
 exports.getLeagueById = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!id) {
-            return res.status(400).json({ error: 'League ID is required' });
-        }
         const result = await leagueService.getLeagueById(id);
         const league = LeagueMapper.toEntity(result.rows[0]);
         res.json(league);
@@ -58,10 +47,6 @@ exports.getLeagueById = async (req, res) => {
 
 exports.deleteLeague = async (req, res) => {
     const { id } = req.params;
-    if (!id) {
-        return res.status(400).json({ error: 'League ID is required' });
-    }
-
     try {
         await leagueService.deleteLeague(id);
         res.json({ message: 'League deleted successfully' });
