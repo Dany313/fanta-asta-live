@@ -39,6 +39,10 @@ export const useAuctionSocket = () => {
       }
     });
 
+    socket.on('team_token_reset', () => {
+        queryClient.invalidateQueries({ queryKey: ['teams'] });
+    });
+
     socket.on('bid_error', (error) => alert(`⚠️ ${error.message}`));
     socket.on('assign_error', (error) => alert(`❌ ${error.message}`));
 
@@ -50,6 +54,7 @@ export const useAuctionSocket = () => {
       socket.off('session_status_changed');
       socket.off('auction_sync_data');
       socket.off('player_assigned');
+      socket.off('team_token_reset');
       socket.off('bid_error');
       socket.off('assign_error');
     };

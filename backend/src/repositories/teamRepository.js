@@ -55,6 +55,12 @@ class TeamRepository {
         return result;
     }
 
+    async resetInviteToken(teamId) {
+        const query = `UPDATE teams SET invite_token = gen_random_uuid() WHERE id = $1 RETURNING invite_token`;
+        const result = await db.query(query, [teamId]);
+        return result;
+    }
+
     async create(leagueId, teamName) {
         const query = `INSERT INTO teams (name, league_id) VALUES ($1, $2) RETURNING *`;
         const result = await db.query(query, [teamName, leagueId]);
