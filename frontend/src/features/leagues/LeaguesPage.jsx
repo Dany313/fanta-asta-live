@@ -5,7 +5,10 @@ import { Box, Typography, Paper, CircularProgress } from '@mui/material';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
 import LeaguesList from './components/LeaguesList';
+import UploadListoneModal from './components/UploadListoneModal';
 import { getLeagues, postLeague, putLeague, delLeague } from '../../api/leaguesApi';
+import { Button } from '@mui/material';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 const styles = {
     container: {
@@ -22,6 +25,7 @@ const styles = {
         boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between',
         gap: '15px',
         borderLeft: '5px solid #f1c40f' // Giallo per i trofei/leghe
     },
@@ -41,6 +45,7 @@ const styles = {
 const LeaguesPage = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const [isUploadModalOpen, setIsUploadModalOpen] = React.useState(false);
 
     // Queries
     const { data: leagues = [], isLoading: loading } = useQuery({
@@ -79,15 +84,27 @@ const LeaguesPage = () => {
     return (
         <Box style={styles.container}>
             <Paper style={styles.headerPaper} elevation={0}>
-                <EmojiEventsIcon style={{ fontSize: 40, color: '#f1c40f' }} />
-                <Box>
-                    <Typography variant="h5" style={styles.headerTitle}>
-                        Le Tue Leghe
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                        Gestisci le competizioni e le squadre
-                    </Typography>
+                <Box display="flex" alignItems="center" gap={2}>
+                    <EmojiEventsIcon style={{ fontSize: 40, color: '#f1c40f' }} />
+                    <Box>
+                        <Typography variant="h5" style={styles.headerTitle}>
+                            Le Tue Leghe
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                            Gestisci le competizioni e le squadre
+                        </Typography>
+                    </Box>
                 </Box>
+                
+                {/* Upload Excel Button */}
+                <Button 
+                    variant="outlined" 
+                    color="primary" 
+                    startIcon={<UploadFileIcon />}
+                    onClick={() => setIsUploadModalOpen(true)}
+                >
+                    Carica Listone Excel
+                </Button>
             </Paper>
 
             {loading ? (
@@ -102,6 +119,15 @@ const LeaguesPage = () => {
                     onDelete={removeLeague}
                 />
             )}
+
+            <UploadListoneModal 
+                open={isUploadModalOpen} 
+                onClose={() => setIsUploadModalOpen(false)}
+                onSuccess={() => {
+                    alert('Listone caricato con successo!');
+                    queryClient.invalidateQueries({ queryKey: ['players'] });
+                }}
+            />
         </Box>
     );
 };
