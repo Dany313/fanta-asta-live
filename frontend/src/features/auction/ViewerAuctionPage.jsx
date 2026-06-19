@@ -17,7 +17,7 @@ import { getPlayers } from '../../api/playersApi';
 import { getRosterByLeague } from '../../api/rosterApi';
 import { getTeams } from '../../api/teamsApi';
 import AdminCustomBet from './components/AdminCustomBet';
-import { Stack, Box } from '@mui/material';
+import { Stack, Box, Typography } from '@mui/material';
 import AssignPlayerButton from './components/AssignPlayerButton';
 
 export default function ViewerDashboard() {
@@ -93,22 +93,27 @@ export default function ViewerDashboard() {
 
             {!activeAuction?.player && (
                 <Stack direction="row" justifyContent="space-between" alignItems="start" style={{ marginBottom: '30px' }}>
-                    <Button
-                        variant="contained"
-                        startIcon={<FormatListBulletedIcon />}
-                        onClick={() => setListoneOpen(true)}
-                        style={{
-                            backgroundColor: '#2ecc71',
-                            color: 'white',
-                            fontWeight: 'bold',
-                            textTransform: 'none',
-                            borderRadius: '8px',
-                            padding: '10px 20px',
-                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        }}
-                    >
-                        Apri Listone
-                    </Button>
+                    <Box>
+                        <Button
+                            variant="contained"
+                            startIcon={<FormatListBulletedIcon />}
+                            onClick={() => setListoneOpen(true)}
+                            style={{
+                                backgroundColor: '#2ecc71',
+                                color: 'white',
+                                fontWeight: 'bold',
+                                textTransform: 'none',
+                                borderRadius: '8px',
+                                padding: '10px 20px',
+                                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                            }}
+                        >
+                            Apri Listone
+                        </Button>
+                        <Typography variant="subtitle1" style={{ marginTop: '10px', color: '#7f8c8d' }}>
+                            👤 Collegato come: <strong>{localStorage.getItem('viewerTeamName') || 'Sconosciuto'}</strong>
+                        </Typography>
+                    </Box>
                 </Stack>
             )}
 

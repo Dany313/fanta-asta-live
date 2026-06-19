@@ -90,7 +90,6 @@ const TeamsPage = () => {
     });
 
     const handleStartAuction = () => {
-        localStorage.removeItem('adminTeamId');
         navigate(`/auction/${leagueId}`);
     };
 

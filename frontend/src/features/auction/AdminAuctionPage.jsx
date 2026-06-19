@@ -19,7 +19,7 @@ import { getPlayers } from '../../api/playersApi';
 import { getRosterByLeague } from '../../api/rosterApi';
 import { getTeams } from '../../api/teamsApi';
 import AdminCustomBet from './components/AdminCustomBet';
-import { Stack, Box } from '@mui/material';
+import { Stack, Box, Typography } from '@mui/material';
 import AssignPlayerButton from './components/AssignPlayerButton';
 
 export default function AdminDashboard() {
@@ -115,7 +115,12 @@ export default function AdminDashboard() {
             {/* ... Intestazione identica al tuo codice ... */}
 
             <Stack direction="row" justifyContent="space-between" alignItems="start" style={{ marginBottom: '30px' }}>
-                <InvitePanel teams={teams} />
+                <Box>
+                    <InvitePanel teams={teams} />
+                    <Typography variant="subtitle1" style={{ marginTop: '10px', color: '#7f8c8d' }}>
+                        👤 Collegato come: <strong>{teams.find(t => t.id === Number(localStorage.getItem('adminTeamId')))?.name || 'Sconosciuto'}</strong> (Admin)
+                    </Typography>
+                </Box>
                 <Stack direction="row" spacing={2}>
                     <Button
                         variant="contained"
