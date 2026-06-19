@@ -167,7 +167,7 @@ module.exports = (io, socket) => {
     const logEntry = {
       teamName: bidDto.teamName,
       amount: bidDto.amount,
-      time: `${now.toLocaleTimeString('it-IT')}.${now.getMilliseconds().toString().padStart(3, '0')}`
+      time: `${now.toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome' })}.${now.getMilliseconds().toString().padStart(3, '0')}`
     };
     activeAuction.history.unshift(logEntry);
 

@@ -69,14 +69,14 @@ export default function AuctionLog({ history }) {
                         <ListItem key={index} style={styles.listItem} disablePadding>
                             <ListItemText 
                                 primary={
-                                    <Box display="flex" justifyContent="space-between" width="100%">
-                                        <span style={index === 0 ? styles.latestText : styles.normalText}>
+                                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', width: '100%', alignItems: { xs: 'flex-start', sm: 'center' } }}>
+                                        <Typography variant="body1" sx={{ fontWeight: index === 0 ? 'bold' : 'normal', color: index === 0 ? '#2ecc71' : '#2f3542' }}>
                                             {log.teamName}
-                                        </span>
-                                        <span style={index === 0 ? styles.latestText : styles.normalText}>
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: index === 0 ? 'bold' : 'normal', color: index === 0 ? '#2ecc71' : '#2f3542', mt: { xs: 0.5, sm: 0 } }}>
                                             {log.amount} FM
                                             <span style={styles.timestamp}>({log.time})</span>
-                                        </span>
+                                        </Typography>
                                     </Box>
                                 }
                             />
