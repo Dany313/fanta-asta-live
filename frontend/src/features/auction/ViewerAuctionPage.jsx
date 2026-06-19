@@ -38,6 +38,7 @@ export default function ViewerDashboard() {
 
     // 2. Leggi lo stato in tempo reale da Zustand
     const activeAuction = useAuctionStore((state) => state.activeAuction);
+    const isSessionActive = useAuctionStore((state) => state.isSessionActive);
 
     useEffect(() => {
         if (socket) {
@@ -100,6 +101,25 @@ export default function ViewerDashboard() {
             isRoleFull = true;
             disableReason = `Reparto ${playerRole} pieno (${roleLimits[playerRole]}/${roleLimits[playerRole]})`;
         }
+    }
+
+    // 4. Se la sessione non è attiva, mostra una schermata di fine asta
+    if (socket && !isSessionActive) {
+        return (
+            <div style={{ padding: '40px 20px', fontFamily: 'Arial', textAlign: 'center' }}>
+                <Paper elevation={0} sx={{ p: 5, borderRadius: '16px', maxWidth: '600px', margin: '0 auto', border: '1px solid #f1f2f6', backgroundColor: '#fdfdfd' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2, color: '#e74c3c' }}>
+                        L'asta è conclusa!
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: '#7f8c8d', mb: 4 }}>
+                        L'amministratore ha terminato la sessione d'asta. Grazie per aver partecipato!
+                    </Typography>
+                    <Button variant="contained" onClick={() => navigate('/')} sx={{ textTransform: 'none', borderRadius: '8px' }}>
+                        Torna alla Home
+                    </Button>
+                </Paper>
+            </div>
+        );
     }
 
     return (
