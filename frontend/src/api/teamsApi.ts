@@ -12,7 +12,8 @@ export interface Team {
 
 export interface ModifyTeamData {
     id: number;
-    teamname: string;
+    teamname?: string;
+    remainingBudget?: number;
 }
 
 export interface AddTeamData {
@@ -54,14 +55,14 @@ export const postTeam = async (data: AddTeamData) => {
 
 export const putTeam = async (data: ModifyTeamData) => {
     const token = localStorage.getItem('adminToken');
-    const { id, teamname } = data;
-    const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}`}/api/teams/${id}`, {
+    const { id, teamname, remainingBudget } = data;
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/teams/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ name: teamname })
+        body: JSON.stringify({ name: teamname, remainingBudget })
     });
     if (!response.ok) {
         const error: any = new Error('Errore nella modifica del team');

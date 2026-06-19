@@ -16,10 +16,31 @@ class TeamRepository {
         return result;
     }
 
-    async update(teamId, newName) {
-        const query = `UPDATE teams SET name = $1 WHERE id = $2 RETURNING *`;
-        const result = await db.query(query, [newName, teamId]);
-        return result;
+    async update(teamId, data) {
+        const updates = [];
+        const values = [];
+        let index = 1;
+
+        if (data.name !== undefined) {
+            updates.push(`name = $${index++}`);
+            values.push(data.name);
+        }
+
+        if (data.remainingBudget !== undefined) {
+            updates.push(`remaining_budget = $${index++}`);
+            values.push(data.remainingBudget);
+        }
+        
+        if (data.maxPossibleBid !== undefined) {
+            updates.push(`max_possible_bid = $${index++}`);
+            values.push(data.maxPossibleBid);
+        }
+
+        if (updates.length === 0) return await this.findById(teamId); // Nessun aggiornamento richiesto
+
+        values.push(teamId);
+        const query = `UPDATE teams SET ${updates.join(', ')} WHERE id = $${index} RETURNING *`;
+        return await db.query(query, values);
     }
 
     async delete(teamId) {

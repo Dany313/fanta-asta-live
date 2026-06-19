@@ -28,8 +28,8 @@ exports.getTeamById = async (req, res) => {
 exports.updateTeam = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
-    const result = await teamService.updateTeam(id, name);
+    const { name, remainingBudget } = req.body;
+    const result = await teamService.updateTeam(id, { name, remainingBudget });
     const teamEntity = TeamMapper.toEntity(result.rows[0]);
     res.json(teamEntity);
   } catch (error) {
