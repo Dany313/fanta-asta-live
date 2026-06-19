@@ -84,7 +84,7 @@ class PlayerService {
             
             return {
                 success: true,
-                message: \`Importazione completata! \${updatedCount} giocatori processati.\`,
+                message: `Importazione completata! ${updatedCount} giocatori processati.`,
                 refundsProcessed: cutPlayers.rows.length,
                 refundDetails: refundedTeams
             };
@@ -93,7 +93,7 @@ class PlayerService {
             if (client) {
                 await client.query('ROLLBACK');
             }
-            throw new Error(\`Importazione fallita: \${error.message}\`);
+            throw new Error(`Importazione fallita: ${error.message}`);
         } finally {
             if (client) {
                 client.release();
