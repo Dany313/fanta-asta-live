@@ -1,5 +1,4 @@
-const TeamRepository = require('../../repositories/teamRepository');
-const teamRepo = new TeamRepository();
+const teamRepo = require('../../repositories/teamRepository');
 
 module.exports = (io, socket) => {
   // ESPULSIONE SQUADRA
