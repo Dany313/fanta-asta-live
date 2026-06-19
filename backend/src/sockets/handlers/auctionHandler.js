@@ -6,18 +6,24 @@ const { activeAuction, resetAuction } = require('./auctionState');
 
 module.exports = (io, socket) => {
   
-  // 0. SYNC STATO INIZIALE (Se un client si connette ad asta in corso)
+  // 0. SYNC STATO INIZIALE
   socket.on('sync_auction', () => {
-    if (activeAuction.player) {
-      const stateDto = new AuctionStateDto(
-        activeAuction.player, 
-        activeAuction.highestBid, 
-        activeAuction.highestBidderName, 
-        activeAuction.history
-      );
-      // Inviamo lo stato SOLO al client che ha richiesto la sync
-      socket.emit('auction_started', stateDto);
-    }
+    const stateDto = new AuctionStateDto(
+      activeAuction.player, 
+      activeAuction.highestBid, 
+      activeAuction.highestBidderName, 
+      activeAuction.history,
+      activeAuction.isSessionActive
+    );
+    // Inviamo sempre lo stato (che contiene isSessionActive)
+    socket.emit('auction_sync_data', stateDto);
+  });
+
+  // 0.5 AVVIO SESSIONE ASTA (Da TeamsPage)
+  socket.on('start_session', () => {
+    activeAuction.isSessionActive = true;
+    io.emit('session_status_changed', { isSessionActive: true });
+    console.log(`🟢 Sessione d'asta APERTA dall'Admin`);
   });
 
   // 1a. INIZIO ASTA ADMIN (Offerta iniziale 0)
@@ -44,7 +50,8 @@ module.exports = (io, socket) => {
         activeAuction.player, 
         activeAuction.highestBid, 
         activeAuction.highestBidderName, 
-        activeAuction.history
+        activeAuction.history,
+        activeAuction.isSessionActive
       );
       io.emit('auction_started', stateDto);
       console.log(`🔨 Asta iniziata (Admin) per ${playerData.name}`);
@@ -87,7 +94,8 @@ module.exports = (io, socket) => {
         activeAuction.player, 
         activeAuction.highestBid, 
         activeAuction.highestBidderName, 
-        activeAuction.history
+        activeAuction.history,
+        activeAuction.isSessionActive
       );
       io.emit('auction_started', stateDto);
       console.log(`🔨 Asta iniziata (Viewer) per ${player.name} da ${teamName}`);
@@ -134,7 +142,8 @@ module.exports = (io, socket) => {
       activeAuction.player,
       activeAuction.highestBid,
       activeAuction.highestBidderName,
-      activeAuction.history
+      activeAuction.history,
+      activeAuction.isSessionActive
     );
     io.emit('auction_update', stateDto);
     console.log(`💰 ${bidDto.teamName} offre ${bidDto.amount}`);
@@ -212,7 +221,9 @@ module.exports = (io, socket) => {
   // 5. CONCLUSIONE ASTA (Reset forzato)
   socket.on('auction_end', () => {
     resetAuction();
+    activeAuction.isSessionActive = false;
     io.emit('auction_aborted'); // Notifica anche i client per allinearli
-    console.log("🛑 Asta conclusa manualmente dall'Admin");
+    io.emit('session_status_changed', { isSessionActive: false });
+    console.log("🛑 Sessione d'Asta conclusa manualmente dall'Admin");
   });
 };

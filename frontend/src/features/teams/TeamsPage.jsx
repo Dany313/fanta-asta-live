@@ -6,7 +6,9 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
 import TeamsList from './components/TeamsList';
-import { getTeams, postTeam, putTeam, delTeam } from '../../api/teamsApi'; // Usa il nuovo hook per le leghe
+import { getTeams, postTeam, putTeam, delTeam } from '../../api/teamsApi'; 
+import { useAuctionSocket } from '../../hooks/useAuctionSocket';
+import { useAuctionStore } from '../../store/useAuctionStore';
 
 const styles = {
     container: {
@@ -55,6 +57,10 @@ const TeamsPage = () => {
     const { leagueId } = useParams();
     const queryClient = useQueryClient();
 
+    // Sincronizza lo stato dell'asta in tempo reale
+    const socket = useAuctionSocket();
+    const isSessionActive = useAuctionStore((state) => state.isSessionActive);
+
     // Queries
     const { data: teams = [], isLoading: loading } = useQuery({
         queryKey: ['teams', leagueId],
@@ -90,6 +96,9 @@ const TeamsPage = () => {
     });
 
     const handleStartAuction = () => {
+        if (!isSessionActive) {
+            socket.emit('start_session');
+        }
         navigate(`/auction/${leagueId}`);
     };
 
@@ -109,12 +118,15 @@ const TeamsPage = () => {
                 </Box>
                 <Button 
                     variant="contained" 
-                    color="secondary" 
+                    color={isSessionActive ? "warning" : "secondary"}
                     startIcon={<PlayArrowIcon />}
                     onClick={handleStartAuction}
-                    style={styles.auctionButton}
+                    style={{
+                        ...styles.auctionButton,
+                        backgroundColor: isSessionActive ? '#f39c12' : undefined
+                    }}
                 >
-                    Avvia Asta
+                    {isSessionActive ? "Asta in Corso" : "Avvia Asta"}
                 </Button>
             </Paper>
 

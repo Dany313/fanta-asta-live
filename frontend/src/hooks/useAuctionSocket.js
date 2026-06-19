@@ -9,11 +9,17 @@ export const useAuctionSocket = () => {
   const startAuction = useAuctionStore((state) => state.startAuction);
   const updateBid = useAuctionStore((state) => state.updateBid);
   const clearAuction = useAuctionStore((state) => state.clearAuction);
+  const setSessionActive = useAuctionStore((state) => state.setSessionActive);
   const queryClient = useQueryClient();
 
   useEffect(() => {
     socket.on('auction_started', startAuction);
     socket.on('auction_update', updateBid);
+    socket.on('session_status_changed', (data) => setSessionActive(data.isSessionActive));
+    socket.on('auction_sync_data', (data) => {
+      if (data.player) startAuction(data);
+      setSessionActive(data.isSessionActive);
+    });
     
     socket.on('player_assigned', (response) => {
       if (response.success) {
@@ -35,6 +41,8 @@ export const useAuctionSocket = () => {
     return () => {
       socket.off('auction_started');
       socket.off('auction_update');
+      socket.off('session_status_changed');
+      socket.off('auction_sync_data');
       socket.off('player_assigned');
       socket.off('bid_error');
       socket.off('assign_error');

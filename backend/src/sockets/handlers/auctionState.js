@@ -1,5 +1,6 @@
 // Stato globale dell'asta (Singleton)
 const activeAuction = {
+  isSessionActive: false,
   player: null,
   highestBid: 0,
   highestBidderId: null,
