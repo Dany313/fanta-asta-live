@@ -23,3 +23,19 @@ exports.getPlayersForAuction = async (req, res) => {
     res.status(500).json({ error: 'Errore interno' });
   }
 };
+
+exports.uploadPlayers = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nessun file caricato' });
+    }
+    
+    // req.file.buffer contains the binary data of the file
+    const result = await playerService.importPlayersFromBuffer(req.file.buffer);
+    
+    res.json(result);
+  } catch (error) {
+    console.error("Errore uploadPlayers:", error);
+    res.status(500).json({ error: error.message || 'Errore interno' });
+  }
+};
