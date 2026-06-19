@@ -9,7 +9,8 @@ const styles = {
         border: '1px solid #f1f2f6',
         boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
         minWidth: '300px',
-        height: '100%',
+        height: { xs: '300px', md: '100%' },
+        maxHeight: { xs: '400px', md: '600px' },
         display: 'flex',
         flexDirection: 'column'
     },
@@ -52,7 +53,7 @@ const styles = {
 
 export default function AuctionLog({ history }) {
     return (
-        <Paper style={styles.container} elevation={0}>
+        <Paper sx={styles.container} elevation={0}>
             <Typography variant="subtitle2" style={styles.title}>
                 📜 Cronologia Offerte
             </Typography>
