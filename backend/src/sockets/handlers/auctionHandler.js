@@ -180,7 +180,7 @@ module.exports = (io, socket) => {
         return socket.emit('assign_error', { message: `Budget insufficiente per completare la rosa!` });
       }
 
-      const newMaxPossibleBid = activeAuction.maxPossibleBids[winnerId] - finalPrice - 1;
+      const newMaxPossibleBid = activeAuction.maxPossibleBids[winnerId] - finalPrice + 1;
 
       await db.query('BEGIN');
       await db.query(`INSERT INTO rosters (team_id, player_id, purchase_price) VALUES ($1, $2, $3)`, [winnerId, player.id, finalPrice]);

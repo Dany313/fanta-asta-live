@@ -27,7 +27,7 @@ exports.assign_player_to_team = async (team_id, player_id, amount) => {
         if (!playerRole) throw new Error("Giocatore non trovato.");
 
         // 3. CONTROLLO: Il budget è sufficiente?
-        if ((remaining_budget - amount) < 0) throw new Error("Budget insufficiente.");
+        if (amount > (teamInfo.max_possible_bid || 0)) throw new Error("Offerta superiore alla puntata massima consentita.");
 
         // 4. CONTROLLO RUOLO
         const currentRoleCount = await repo.countPlayersByRole(team_id, playerRole, client);
@@ -40,8 +40,10 @@ exports.assign_player_to_team = async (team_id, player_id, amount) => {
         // 5. ASSEGNAZIONE
         const insertResult = await repo.addPlayerToRoster(team_id, player_id, amount, client);
 
-        // 6. AGGIORNAMENTO BUDGET
+        // 6. AGGIORNAMENTO BUDGET E MAX BID
+        const newMaxBid = (teamInfo.max_possible_bid || 0) - amount + 1;
         await repo.updateTeamBudget(team_id, remaining_budget - amount, client);
+        await repo.updateTeamMaxPossibleBid(team_id, newMaxBid, client);
 
         return insertResult;
     });
@@ -57,15 +59,19 @@ exports.player_cost_update = async (team_id, player_id, amount) => {
         if (!rosterEntry) throw new Error("Giocatore non presente nella rosa.");
 
         const newBudget = (teamInfo.remaining_budget + rosterEntry.purchase_price) - amount;
+        const newMaxBid = (teamInfo.max_possible_bid || 0) + rosterEntry.purchase_price - amount;
 
         // 1. CONTROLLO: Il budget è sufficiente?
-        if (newBudget < 0) throw new Error("Budget insufficiente.");
+        if (amount > ((teamInfo.max_possible_bid || 0) + rosterEntry.purchase_price)) {
+             throw new Error("Costo troppo alto: supera il limite massimo della squadra.");
+        }
 
         // 2. AGGIORNAMENTO ROSTER
         const updateResult = await repo.updateRosterPrice(team_id, player_id, amount, client);
 
-        // 3. AGGIORNAMENTO BUDGET
+        // 3. AGGIORNAMENTO BUDGET E MAX BID
         await repo.updateTeamBudget(team_id, newBudget, client);
+        await repo.updateTeamMaxPossibleBid(team_id, newMaxBid, client);
 
         return updateResult;
     });
@@ -90,7 +96,7 @@ exports.delete_player_from_team = async (team_id, player_id, refundMode = 'PURCH
         // Let's do it in the next step, I'll update it here assuming it's available.
         // But since I need to change repo.getTeamInfo, I will do it first or assume it's updated.
         // Let's assume I'll update repo.getTeamInfo to return max_possible_bid too.
-        const newMaxBid = (teamInfo.max_possible_bid || 0) + refundAmount + 1;
+        const newMaxBid = (teamInfo.max_possible_bid || 0) + refundAmount - 1;
 
         // 1. ELIMINAZIONE
         const deleteResult = await repo.deletePlayerFromRoster(team_id, player_id, client);
