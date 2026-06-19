@@ -18,7 +18,7 @@ import { getPlayers } from '../../api/playersApi';
 import { getRosterByLeague } from '../../api/rosterApi';
 import { getTeams } from '../../api/teamsApi';
 import AdminCustomBet from './components/AdminCustomBet';
-import { Stack, Box, Typography } from '@mui/material';
+import { Stack, Box, Typography, Paper } from '@mui/material';
 import AssignPlayerButton from './components/AssignPlayerButton';
 
 export default function ViewerDashboard() {
