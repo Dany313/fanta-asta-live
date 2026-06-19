@@ -110,6 +110,9 @@ export default function AdminDashboard() {
         return nameMatch && roleMatch;
     });
 
+    const adminTeamId = Number(localStorage.getItem('adminTeamId'));
+    const isWinning = activeAuction?.highestBidderId === adminTeamId;
+
     return (
         <div style={{ padding: '20px', fontFamily: 'Arial' }}>
             {/* ... Intestazione identica al tuo codice ... */}
@@ -168,6 +171,7 @@ export default function AdminDashboard() {
                                 player={activeAuction.player}
                                 currentBid={activeAuction.highestBid}
                                 onBid={handleAdminBid}
+                                isWinning={isWinning}
                             />
                             <Button 
                                 variant="contained" 

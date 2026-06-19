@@ -3,17 +3,18 @@ import { Paper, Typography, Box, Button, TextField, Stack, Avatar } from '@mui/m
 import SendIcon from '@mui/icons-material/Send';
 
 const styles = {
-    container: {
+    container: (isWinning) => ({
         padding: '30px',
         backgroundColor: 'white',
         borderRadius: '12px',
-        boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
+        boxShadow: isWinning ? '0 8px 25px rgba(46, 204, 113, 0.4)' : '0 8px 20px rgba(0,0,0,0.1)',
         textAlign: 'center',
-        border: '1px solid #f1f2f6',
+        border: isWinning ? '3px solid #2ecc71' : '1px solid #f1f2f6',
         height: '100%',
         display: 'flex',
-        flexDirection: 'column'
-    },
+        flexDirection: 'column',
+        transition: 'all 0.3s ease'
+    }),
     header: {
         marginBottom: '20px',
         textTransform: 'uppercase',
@@ -77,7 +78,7 @@ const styles = {
     }
 };
 
-export default function PlayerCard({ player, currentBid, onBid }) {
+export default function PlayerCard({ player, currentBid, onBid, isWinning }) {
     const [customBid, setCustomBid] = useState('');
 
     if (!player) return null;
@@ -96,7 +97,7 @@ export default function PlayerCard({ player, currentBid, onBid }) {
     };
 
     return (
-        <Paper style={styles.container} elevation={0}>
+        <Paper style={styles.container(isWinning)} elevation={0}>
             <Typography variant="subtitle2" style={styles.header}>
                 🔨 ASTA IN CORSO
             </Typography>

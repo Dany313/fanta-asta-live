@@ -83,10 +83,11 @@ export default function ViewerDashboard() {
         const teamId = teamId_ || localStorage.getItem('viewerTeamId');
         if (!teamId) return;
 
-
-        // const teamName = teams.find(t => t.id === Number(teamId))?.name;
         socket.emit('place_bid', { teamId: Number(teamId), teamName: localStorage.getItem('viewerTeamName'), amount });
     };
+
+    const viewerTeamId = Number(localStorage.getItem('viewerTeamId'));
+    const isWinning = activeAuction?.highestBidderId === viewerTeamId;
 
     return (
         <div style={{ padding: '20px', fontFamily: 'Arial' }}>
@@ -127,6 +128,7 @@ export default function ViewerDashboard() {
                                 player={activeAuction.player}
                                 currentBid={activeAuction.highestBid}
                                 onBid={handleBid}
+                                isWinning={isWinning}
                             />
                         </Box>
                         <Box flex={1} display="flex" flexDirection="column">

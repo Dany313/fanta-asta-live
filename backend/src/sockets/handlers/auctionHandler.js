@@ -84,10 +84,11 @@ module.exports = (io, socket) => {
       activeAuction.highestBid = 1;
       activeAuction.highestBidderId = Number(teamId);
       activeAuction.highestBidderName = teamName;
+      const now = new Date();
       activeAuction.history.unshift({
         teamName: teamName,
         amount: 1,
-        time: new Date().toLocaleTimeString('it-IT')
+        time: `${now.toLocaleTimeString('it-IT')}.${now.getMilliseconds().toString().padStart(3, '0')}`
       });
 
       const stateDto = new AuctionStateDto(
@@ -113,7 +114,7 @@ module.exports = (io, socket) => {
     }
 
     if (bidDto.amount <= activeAuction.highestBid) {
-      return socket.emit('bid_error', { message: 'Offerta già superata!' });
+      return socket.emit('bid_error', { message: 'Qualcuno ha puntato prima di te!' });
     }
 
     const maxBudget = activeAuction.teamBudgets[bidDto.teamId] || 0;
@@ -131,10 +132,11 @@ module.exports = (io, socket) => {
     activeAuction.highestBidderId = bidDto.teamId;
     activeAuction.highestBidderName = bidDto.teamName;
 
+    const now = bidDto.timestamp || new Date();
     const logEntry = {
       teamName: bidDto.teamName,
       amount: bidDto.amount,
-      time: bidDto.timestamp.toLocaleTimeString('it-IT')
+      time: `${now.toLocaleTimeString('it-IT')}.${now.getMilliseconds().toString().padStart(3, '0')}`
     };
     activeAuction.history.unshift(logEntry);
 
