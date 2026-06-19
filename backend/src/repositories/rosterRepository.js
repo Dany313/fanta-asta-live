@@ -26,6 +26,25 @@ class RosterRepository {
     return { rows };
   }
 
+  async getExportData(leagueId, dbClient = pool) {
+    const query = `
+      SELECT 
+        p.id AS player_id,
+        p.role,
+        p.name AS player_name,
+        p.club AS club,
+        t.name AS team_name,
+        r.purchase_price
+      FROM rosters r
+      JOIN teams t ON r.team_id = t.id
+      JOIN players p ON r.player_id = p.id
+      WHERE t.league_id = $1
+      ORDER BY t.name ASC, p.role ASC
+    `;
+    const { rows } = await dbClient.query(query, [leagueId]);
+    return rows;
+  }
+
   // --- Metodi usati dal Service per le regole di business ---
 
   async getTeamInfo(teamId, dbClient = pool) {

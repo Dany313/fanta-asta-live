@@ -7,8 +7,11 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
 import TeamsList from './components/TeamsList';
 import { getTeams, postTeam, putTeam, delTeam } from '../../api/teamsApi'; 
+import { exportLeagueRosters } from '../../api/rosterApi';
 import { useAuctionSocket } from '../../hooks/useAuctionSocket';
 import { useAuctionStore } from '../../store/useAuctionStore';
+import DownloadIcon from '@mui/icons-material/Download';
+import { Stack } from '@mui/material';
 
 const styles = {
     container: {
@@ -102,6 +105,14 @@ const TeamsPage = () => {
         navigate(`/auction/${leagueId}`);
     };
 
+    const handleExportRosters = async () => {
+        try {
+            await exportLeagueRosters(Number(leagueId));
+        } catch (error) {
+            alert(error.message);
+        }
+    };
+
     return (
         <Box style={styles.container}>
             <Paper style={styles.headerPaper} elevation={0}>
@@ -116,18 +127,34 @@ const TeamsPage = () => {
                         </Typography>
                     </Box>
                 </Box>
-                <Button 
-                    variant="contained" 
-                    color={isSessionActive ? "warning" : "secondary"}
-                    startIcon={<PlayArrowIcon />}
-                    onClick={handleStartAuction}
-                    style={{
-                        ...styles.auctionButton,
-                        backgroundColor: isSessionActive ? '#f39c12' : undefined
-                    }}
-                >
-                    {isSessionActive ? "Asta in Corso" : "Avvia Asta"}
-                </Button>
+                <Stack direction="row" spacing={2}>
+                    <Button 
+                        variant="outlined" 
+                        color="primary"
+                        startIcon={<DownloadIcon />}
+                        onClick={handleExportRosters}
+                        style={{
+                            fontWeight: 'bold',
+                            textTransform: 'none',
+                            borderRadius: '8px',
+                            padding: '8px 20px'
+                        }}
+                    >
+                        Esporta Rose
+                    </Button>
+                    <Button 
+                        variant="contained" 
+                        color={isSessionActive ? "warning" : "secondary"}
+                        startIcon={<PlayArrowIcon />}
+                        onClick={handleStartAuction}
+                        style={{
+                            ...styles.auctionButton,
+                            backgroundColor: isSessionActive ? '#f39c12' : undefined
+                        }}
+                    >
+                        {isSessionActive ? "Asta in Corso" : "Avvia Asta"}
+                    </Button>
+                </Stack>
             </Paper>
 
             {loading ? (

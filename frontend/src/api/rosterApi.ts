@@ -38,6 +38,22 @@ export const getRosterByLeague = async (league_id: number): Promise<Roster[]> =>
     return response.json();
 };
 
+export const exportLeagueRosters = async (league_id: number): Promise<void> => {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/rosters/league/${league_id}/export`);
+    if (!response.ok) throw new Error('Errore durante l\'esportazione delle rose');
+    
+    // Logica per scaricare il file nel browser
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rose_lega_${league_id}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+};
+
 export const addPlayerToRoster = async (data: AddPlayerData) => {
     const { team_id, player_id, price } = data;
     const token = localStorage.getItem('adminToken');

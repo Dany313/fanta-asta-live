@@ -108,3 +108,41 @@ exports.delete_player_from_team = async (team_id, player_id, refundMode = 'PURCH
         return deleteResult;
     });
 }
+
+exports.export_rosters_csv = async (leagueId) => {
+    const data = await repo.getExportData(leagueId);
+
+    // CONFIGURAZIONE DELLE COLONNE DEL CSV
+    // Se serve aggiungere o togliere colonne, basta modificare questo array.
+    // label: Intestazione della colonna nel CSV finale
+    // field: Nome del campo nell'oggetto row restituito dal DB
+    const csvConfig = [
+        { label: 'Id_Giocatore', field: 'player_id' },
+        { label: 'Ruolo', field: 'role' },
+        { label: 'Nome_Giocatore', field: 'player_name' },
+        { label: 'Squadra_Serie_A', field: 'club' },
+        { label: 'FantaSquadra', field: 'team_name' },
+        { label: 'Costo_Acquisto', field: 'purchase_price' }
+    ];
+
+    const separator = ';';
+
+    // Genera l'intestazione
+    const headerRow = csvConfig.map(col => col.label).join(separator);
+
+    // Genera le righe dati
+    const dataRows = data.map(row => {
+        return csvConfig.map(col => {
+            let value = row[col.field];
+            if (value === null || value === undefined) value = '';
+            // Se il valore contiene il separatore o accenti strani, lo mettiamo tra virgolette per sicurezza
+            if (typeof value === 'string' && value.includes(separator)) {
+                return `"${value}"`;
+            }
+            return value;
+        }).join(separator);
+    });
+
+    // Unisce intestazione e dati con un ritorno a capo (Windows compatibile \r\n per Excel)
+    return [headerRow, ...dataRows].join('\r\n');
+};

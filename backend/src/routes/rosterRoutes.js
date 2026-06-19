@@ -9,6 +9,7 @@ const { paramsTeamIdSchema, paramsLeagueIdSchema } = require('../dtos/validators
 
 router.get('/team/:teamId', validate({ params: paramsTeamIdSchema }), rosterController.getRostersByTeamId);
 router.get('/league/:leagueId', validate({ params: paramsLeagueIdSchema }), rosterController.getRostersByLeagueId);
+router.get('/league/:leagueId/export', validate({ params: paramsLeagueIdSchema }), rosterController.exportCsv);
 router.put('/', authMiddleware.verifyAdmin, validate({ body: rosterMutationSchema }), rosterController.updateRoster);
 router.post('/',  validate({ body: rosterMutationSchema }), rosterController.addToRoster);
 router.delete('/', authMiddleware.verifyAdmin, validate({ body: rosterDeleteSchema }), rosterController.deleteFromRoster);

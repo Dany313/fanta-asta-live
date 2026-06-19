@@ -50,3 +50,16 @@ exports.deleteFromRoster = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+exports.exportCsv = async (req, res) => {
+  try {
+    const { leagueId } = req.params;
+    const csvContent = await rosterService.export_rosters_csv(leagueId);
+    
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="rose_lega_${leagueId}.csv"`);
+    res.status(200).send(csvContent);
+  } catch (error) {
+    res.status(500).json({ error: 'Errore durante l\'esportazione del file CSV' });
+  }
+};
