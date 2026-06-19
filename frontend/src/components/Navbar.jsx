@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import HomeIcon from '@mui/icons-material/Home';
@@ -33,6 +33,9 @@ const styles = {
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isViewerRoute = location.pathname.startsWith('/viewer') || location.pathname.startsWith('/join') || location.pathname === '/login';
 
   const handleLogout = () => {
     if (window.confirm('Sei sicuro di voler uscire?')) {
@@ -51,22 +54,24 @@ export default function Navbar() {
           </Typography>
         </Box>
 
-        <Box>
-          <Button
-            startIcon={<HomeIcon />}
-            onClick={() => navigate('/')}
-            sx={styles.navButton}
-          >
-            Home
-          </Button>
-          <Button
-            startIcon={<LogoutIcon />}
-            onClick={handleLogout}
-            sx={{ ...styles.navButton, color: '#ff6b6b' }}
-          >
-            Log out
-          </Button>
-        </Box>
+        {!isViewerRoute && (
+          <Box>
+            <Button
+              startIcon={<HomeIcon />}
+              onClick={() => navigate('/')}
+              sx={styles.navButton}
+            >
+              Home
+            </Button>
+            <Button
+              startIcon={<LogoutIcon />}
+              onClick={handleLogout}
+              sx={{ ...styles.navButton, color: '#ff6b6b' }}
+            >
+              Log out
+            </Button>
+          </Box>
+        )}
       </Toolbar>
     </AppBar>
   );
