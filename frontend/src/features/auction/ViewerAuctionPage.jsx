@@ -18,11 +18,12 @@ import { getPlayers } from '../../api/playersApi';
 import { getRosterByLeague } from '../../api/rosterApi';
 import { getTeams } from '../../api/teamsApi';
 import AdminCustomBet from './components/AdminCustomBet';
-import { Stack, Box, Typography, Paper, CircularProgress } from '@mui/material';
+import { Stack, Box, Typography, Paper, CircularProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import AssignPlayerButton from './components/AssignPlayerButton';
 
 export default function ViewerDashboard() {
     const [leagueId, setLeagueId] = useState(null);
+    const [kickOpen, setKickOpen] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -48,11 +49,10 @@ export default function ViewerDashboard() {
             };
             const handleForceLogout = (data) => {
                 if (data.teamId === Number(localStorage.getItem('viewerTeamId'))) {
-                    alert('Sei stato disconnesso dall\'amministratore.');
                     localStorage.removeItem('viewerTeamId');
                     localStorage.removeItem('viewerTeamName');
                     localStorage.removeItem('viewerToken');
-                    navigate('/');
+                    setKickOpen(true);
                 }
             };
             socket.on('auction_aborted', handleAbort);
@@ -214,6 +214,20 @@ export default function ViewerDashboard() {
                 </Typography>
                 <TeamsOverviewGrid teams={teams} rosters={roster} isAdmin={false} />
             </Box>
+
+            <Dialog open={kickOpen} disableEscapeKeyDown>
+                <DialogTitle style={{ color: '#e74c3c', fontWeight: 'bold' }}>Disconnesso</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Sei stato disconnesso dalla sessione d'asta dall'amministratore.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => navigate('/')} color="primary" variant="contained">
+                        Torna alla Home
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </div>
     );
 }
