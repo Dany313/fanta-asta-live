@@ -71,7 +71,7 @@ exports.player_cost_update = async (team_id, player_id, amount) => {
     });
 }
 
-exports.delete_player_from_team = async (team_id, player_id) => {
+exports.delete_player_from_team = async (team_id, player_id, refundMode = 'PURCHASE') => {
     return await withTransaction(async (client) => {
         const teamInfo = await repo.getTeamInfo(team_id, client);
         if (!teamInfo) throw new Error("Squadra non trovata.");
@@ -79,13 +79,25 @@ exports.delete_player_from_team = async (team_id, player_id) => {
         const rosterEntry = await repo.getRosterEntry(team_id, player_id, client);
         if (!rosterEntry) throw new Error("Giocatore non presente nella rosa.");
 
-        const newBudget = teamInfo.remaining_budget + rosterEntry.purchase_price;
+        // Calcolo del rimborso
+        const refundAmount = refundMode === 'CURRENT' ? rosterEntry.current_price : rosterEntry.purchase_price;
+
+        const newBudget = teamInfo.remaining_budget + refundAmount;
+
+        // Recupera anche max_possible_bid se possibile, oppure calcoliamolo.
+        // Wait, getTeamInfo only selects league_id, remaining_budget!
+        // I need to add max_possible_bid to getTeamInfo in RosterRepository.
+        // Let's do it in the next step, I'll update it here assuming it's available.
+        // But since I need to change repo.getTeamInfo, I will do it first or assume it's updated.
+        // Let's assume I'll update repo.getTeamInfo to return max_possible_bid too.
+        const newMaxBid = (teamInfo.max_possible_bid || 0) + refundAmount + 1;
 
         // 1. ELIMINAZIONE
         const deleteResult = await repo.deletePlayerFromRoster(team_id, player_id, client);
 
-        // 2. AGGIORNAMENTO BUDGET
+        // 2. AGGIORNAMENTO BUDGET E MAX BID
         await repo.updateTeamBudget(team_id, newBudget, client);
+        await repo.updateTeamMaxPossibleBid(team_id, newMaxBid, client);
 
         return deleteResult;
     });

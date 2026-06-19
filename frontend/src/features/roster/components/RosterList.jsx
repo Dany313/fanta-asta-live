@@ -88,6 +88,10 @@ export default function RosterList({ players, allPlayers, onAdd, onUpdate, onDel
     const [editPlayerId, setEditPlayerId] = useState(null);
     const [editPrice, setEditPrice] = useState(0);
 
+    // State per l'eliminazione
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [deletePlayer, setDeletePlayer] = useState(null);
+
     // Calcoli derivati
     const sortedPlayers = useMemo(() => {
         const roleOrder = { 'P': 1, 'D': 2, 'C': 3, 'A': 4 };
@@ -118,9 +122,16 @@ export default function RosterList({ players, allPlayers, onAdd, onUpdate, onDel
         }
     };
 
-    const handleDelete = (id, name) => {
-        if (window.confirm(`Rimuovere ${name} dalla rosa?`)) {
-            onDelete(id);
+    const handleDeleteClick = (player) => {
+        setDeletePlayer(player);
+        setDeleteOpen(true);
+    };
+
+    const confirmDelete = (refundMode) => {
+        if (deletePlayer) {
+            onDelete({ playerId: deletePlayer.player_id, refundMode });
+            setDeleteOpen(false);
+            setDeletePlayer(null);
         }
     };
 
@@ -219,7 +230,7 @@ export default function RosterList({ players, allPlayers, onAdd, onUpdate, onDel
                                                 <IconButton 
                                                     size="small" 
                                                     color="error" 
-                                                    onClick={() => handleDelete(player.player_id, player.name)}
+                                                    onClick={() => handleDeleteClick(player)}
                                                 >
                                                     <DeleteIcon />
                                                 </IconButton>
@@ -255,6 +266,47 @@ export default function RosterList({ players, allPlayers, onAdd, onUpdate, onDel
                     <Button onClick={() => setEditOpen(false)} color="secondary">Annulla</Button>
                     <Button onClick={handleUpdate} variant="contained" color="primary" startIcon={<SaveIcon />}>
                         Salva
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* DIALOG ELIMINAZIONE GIOCATORE */}
+            <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle style={{ backgroundColor: '#f8d7da', color: '#721c24' }}>
+                    Svincola Giocatore
+                </DialogTitle>
+                <DialogContent style={{ paddingTop: '20px' }}>
+                    <Typography variant="body1" gutterBottom>
+                        Stai per eliminare <strong>{deletePlayer?.name}</strong> dalla rosa.
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary" style={{ marginBottom: '20px' }}>
+                        Scegli l'importo da rimborsare alla squadra:
+                    </Typography>
+                    
+                    <Box display="flex" flexDirection="column" gap={2}>
+                        <Button 
+                            variant="outlined" 
+                            color="primary"
+                            onClick={() => confirmDelete('PURCHASE')}
+                            style={{ justifyContent: 'space-between', padding: '10px 20px' }}
+                        >
+                            <span>Prezzo d'Acquisto</span>
+                            <strong>{deletePlayer?.purchase_price} FM</strong>
+                        </Button>
+                        <Button 
+                            variant="outlined" 
+                            color="secondary"
+                            onClick={() => confirmDelete('CURRENT')}
+                            style={{ justifyContent: 'space-between', padding: '10px 20px' }}
+                        >
+                            <span>Quotazione Attuale</span>
+                            <strong>{deletePlayer?.current_price ?? 0} FM</strong>
+                        </Button>
+                    </Box>
+                </DialogContent>
+                <DialogActions style={{ padding: '15px' }}>
+                    <Button onClick={() => setDeleteOpen(false)} style={{ color: '#7f8c8d' }}>
+                        Annulla
                     </Button>
                 </DialogActions>
             </Dialog>

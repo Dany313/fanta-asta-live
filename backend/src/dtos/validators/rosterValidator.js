@@ -11,5 +11,6 @@ exports.rosterMutationSchema = z.object({
 });
 
 exports.rosterDeleteSchema = z.object({
-    ...rosterBodyBase
+    ...rosterBodyBase,
+    refundMode: z.enum(['PURCHASE', 'CURRENT']).optional()
 });

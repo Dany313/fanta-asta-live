@@ -5,7 +5,7 @@ class RosterRepository {
   // Metodi di lettura base (che usavi nel controller)
   async findAllByTeamId(teamId, dbClient = pool) {
     const query = `
-      SELECT r.*, p.name, p.role, p.club 
+      SELECT r.*, p.name, p.role, p.club, p.current_price 
       FROM rosters r 
       JOIN players p ON r.player_id = p.id 
       WHERE r.team_id = $1
@@ -16,7 +16,7 @@ class RosterRepository {
 
   async findAllByLeagueId(leagueId, dbClient = pool) {
     const query = `
-      SELECT r.*, p.name, p.role, p.club 
+      SELECT r.*, p.name, p.role, p.club, p.current_price 
       FROM rosters r 
       JOIN teams t ON r.team_id = t.id 
       JOIN players p ON r.player_id = p.id
@@ -29,7 +29,7 @@ class RosterRepository {
   // --- Metodi usati dal Service per le regole di business ---
 
   async getTeamInfo(teamId, dbClient = pool) {
-    const { rows } = await dbClient.query(`SELECT league_id, remaining_budget FROM teams WHERE id = $1`, [teamId]);
+    const { rows } = await dbClient.query(`SELECT league_id, remaining_budget, max_possible_bid FROM teams WHERE id = $1`, [teamId]);
     return rows.length > 0 ? rows[0] : null;
   }
 
@@ -51,7 +51,12 @@ class RosterRepository {
   }
 
   async getRosterEntry(teamId, playerId, dbClient = pool) {
-    const { rows } = await dbClient.query(`SELECT purchase_price FROM rosters WHERE team_id = $1 AND player_id = $2`, [teamId, playerId]);
+    const { rows } = await dbClient.query(`
+      SELECT r.purchase_price, p.current_price 
+      FROM rosters r 
+      JOIN players p ON r.player_id = p.id 
+      WHERE r.team_id = $1 AND r.player_id = $2
+    `, [teamId, playerId]);
     return rows.length > 0 ? rows[0] : null;
   }
 
@@ -77,6 +82,10 @@ class RosterRepository {
 
   async updateTeamBudget(teamId, newBudget, dbClient = pool) {
     await dbClient.query(`UPDATE teams SET remaining_budget = $1 WHERE id = $2`, [newBudget, teamId]);
+  }
+
+  async updateTeamMaxPossibleBid(teamId, newMaxBid, dbClient = pool) {
+    await dbClient.query(`UPDATE teams SET max_possible_bid = $1 WHERE id = $2`, [newMaxBid, teamId]);
   }
 }
 

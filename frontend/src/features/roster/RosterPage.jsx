@@ -76,8 +76,8 @@ const RosterPage = () => {
     });
 
     const { mutate: removePlayer } = useMutation({
-        mutationFn: async (playerId) => {
-            return removePlayerFromRoster({ team_id: teamId, player_id: playerId });
+        mutationFn: async ({ playerId, refundMode }) => {
+            return removePlayerFromRoster({ team_id: teamId, player_id: playerId, refundMode });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['rosters'] });

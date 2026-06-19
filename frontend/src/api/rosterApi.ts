@@ -16,6 +16,7 @@ interface ModifyPlayerPriceData {
 interface RemovePlayerData {
     team_id: number;
     player_id: number;
+    refundMode?: 'PURCHASE' | 'CURRENT';
 }
 
 interface AddPlayerData {
@@ -80,15 +81,16 @@ export const putPlayerPrice = async (data: ModifyPlayerPriceData) => {
 };
 
 export const removePlayerFromRoster = async (data: RemovePlayerData) => {
-    const { team_id, player_id } = data;
+    const { team_id, player_id, refundMode } = data;
     const token = localStorage.getItem('adminToken');
     const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-    const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}`}/api/rosters`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/rosters`, {
         method: 'DELETE',
         headers,
         body: JSON.stringify({
             teamId: team_id,
-            playerId: player_id
+            playerId: player_id,
+            refundMode
         })
     });
     if (!response.ok) {

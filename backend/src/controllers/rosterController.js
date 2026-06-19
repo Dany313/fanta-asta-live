@@ -43,8 +43,8 @@ exports.addToRoster = async (req, res) => {
 
 exports.deleteFromRoster = async (req, res) => {
   try {
-    const { teamId, playerId } = req.body; // Sarebbe meglio usare req.params per le DELETE, ma manteniamo la tua struttura
-    const result = await rosterService.delete_player_from_team(teamId, playerId);
+    const { teamId, playerId, refundMode } = req.body;
+    const result = await rosterService.delete_player_from_team(teamId, playerId, refundMode);
     res.status(200).json(result);
   } catch (error) {
     res.status(400).json({ error: error.message });
