@@ -201,7 +201,7 @@ export default function TeamsOverviewGrid({ teams, rosters, isAdmin }) {
                         </Box>
 
                         {/* BODY */}
-                        <Box style={{ flex: 1, overflowY: 'auto', maxHeight: '600px' }}>
+                        <Box style={{ flex: 1 }}>
                             {rolesConfig.map(config => {
                                 const rolePlayers = teamRosters.filter(p => p.role === config.role);
                                 const numSlots = Math.max(config.minSlots, rolePlayers.length);
