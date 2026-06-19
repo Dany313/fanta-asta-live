@@ -117,7 +117,7 @@ export default function TeamsOverviewGrid({ teams, rosters, isAdmin }) {
     const updatePriceMut = useMutation({
         mutationFn: async ({ teamId, playerId, price }) => putPlayerPrice({ team_id: teamId, player_id: playerId, price: parseInt(price, 10) }),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['rosters'] });
+            queryClient.invalidateQueries({ queryKey: ['roster'] });
             queryClient.invalidateQueries({ queryKey: ['teams'] });
         },
         onError: (e) => alert(`Errore: ${e.message}`)
@@ -126,7 +126,7 @@ export default function TeamsOverviewGrid({ teams, rosters, isAdmin }) {
     const deletePlayerMut = useMutation({
         mutationFn: async ({ teamId, playerId, refundMode }) => removePlayerFromRoster({ team_id: teamId, player_id: playerId, refundMode }),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['rosters'] });
+            queryClient.invalidateQueries({ queryKey: ['roster'] });
             queryClient.invalidateQueries({ queryKey: ['teams'] });
             queryClient.invalidateQueries({ queryKey: ['players'] });
         },
