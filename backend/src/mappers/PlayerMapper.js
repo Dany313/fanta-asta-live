@@ -1,4 +1,4 @@
-const Player = require('../entity/Player');
+const Player = require('../entities/Player');
 
 class PlayerMapper {
   static toEntity(dbRow) {

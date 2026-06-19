@@ -1,4 +1,4 @@
-const League = require('../entity/League');
+const League = require('../entities/League');
 
 class LeagueMapper {
   static toEntity(dbRow) {

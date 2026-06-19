@@ -1,4 +1,4 @@
-const Team = require('../entity/Team');
+const Team = require('../entities/Team');
 const TeamResponseDto = require('../dtos/TeamResponseDto');
 
 class TeamMapper {

@@ -5,13 +5,22 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 // Creiamo un nuovo Pool di connessioni usando i dati del .env
-const pool = new Pool({
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    database: process.env.DB_NAME,
-});
+const pool = new Pool(
+    process.env.DATABASE_URL
+        ? {
+              connectionString: process.env.DATABASE_URL,
+              ssl: {
+                  rejectUnauthorized: false,
+              },
+          }
+        : {
+              user: process.env.DB_USER,
+              password: process.env.DB_PASSWORD,
+              host: process.env.DB_HOST,
+              port: process.env.DB_PORT,
+              database: process.env.DB_NAME,
+          }
+);
 
 // Gestione base degli errori di connessione imprevisti
 pool.on('error', (err,client)=> {
