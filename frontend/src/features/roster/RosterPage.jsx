@@ -109,7 +109,7 @@ const RosterPage = () => {
 
     const handleOpenEditBudget = () => {
         if (team) {
-            setNewBudget(team.remaining_budget);
+            setNewBudget(team.remainingBudget);
             setEditBudgetOpen(true);
         }
     };
@@ -129,8 +129,8 @@ const RosterPage = () => {
                         Gestione Rosa {team ? `- ${team.name}` : ''}
                     </Typography>
                     <Typography variant="body2" color="textSecondary">
-                        Budget Rimanente: <strong>{team?.remaining_budget ?? '-'} FM</strong> | 
-                        Puntata Massima: <strong>{team?.max_possible_bid ?? '-'} FM</strong>
+                        Budget Rimanente: <strong>{team?.remainingBudget ?? '-'} FM</strong> | 
+                        Puntata Massima: <strong>{team?.maxPossibleBid ?? '-'} FM</strong>
                     </Typography>
                 </Box>
                 <Button 
