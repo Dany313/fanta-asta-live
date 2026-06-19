@@ -57,7 +57,7 @@ export default function LoginPage() {
 
     try {
       // Inviamo i dati al nostro "buttafuori" su Node.js
-      const response = await axios.post('http://localhost:3000/api/login', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/login`, {
         username,
         password
       });

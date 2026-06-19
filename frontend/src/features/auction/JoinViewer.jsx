@@ -10,7 +10,7 @@ export default function JoinViewer() {
   useEffect(() => {
     const verifyToken = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/api/teams/verify/${token}`);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}`}/api/teams/verify/${token}`);
         
         if (response.data.success) {
           // 🌟 MAGIA: Salviamo il token e l'ID della squadra nel localStorage!

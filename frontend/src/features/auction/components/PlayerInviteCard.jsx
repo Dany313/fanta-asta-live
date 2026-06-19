@@ -7,7 +7,7 @@ export default function PlayerInviteCard({ team }) {
             <strong>{team.name}</strong>
             <button
                 onClick={() => {
-                    navigator.clipboard.writeText(`http://localhost:5173/join/${team.inviteToken}`);
+                    navigator.clipboard.writeText(`${window.location.origin}/join/${team.inviteToken}`);
                     alert(`Copiato!`);
                 }}
                 style={{ backgroundColor: '#7bed9f', border: 'none', padding: '5px 10px', borderRadius: '3px', cursor: 'pointer' }}

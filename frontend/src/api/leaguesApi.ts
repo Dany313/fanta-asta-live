@@ -13,7 +13,7 @@ export interface ModifyLeagueData {
 
 // 1. Funzioni API pure (separate dagli hook)
 export const getLeagues = async (): Promise<League[]> => {
-    const response = await fetch('http://localhost:3000/api/leagues');
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/leagues`);
     if (!response.ok) throw new Error('Errore nel recupero delle leghe');
     return response.json();
 };
@@ -21,7 +21,7 @@ export const getLeagues = async (): Promise<League[]> => {
 export const postLeague = async (leaguename: string) => {
     const token = localStorage.getItem('adminToken');
     if (!token) throw new Error('Admin token non trovato');
-    const response = await fetch('http://localhost:3000/api/leagues', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/leagues`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -41,7 +41,7 @@ export const putLeague = async (data: ModifyLeagueData) => {
     const { id, leaguename } = data;
     const token = localStorage.getItem('adminToken');
     if (!token) throw new Error('Admin token non trovato');
-    const response = await fetch(`http://localhost:3000/api/leagues/${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}`}/api/leagues/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -60,7 +60,7 @@ export const putLeague = async (data: ModifyLeagueData) => {
 export const delLeague = async (id: number) => {
     const token = localStorage.getItem('adminToken');
     if (!token) throw new Error('Admin token non trovato');
-    const response = await fetch(`http://localhost:3000/api/leagues/${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}`}/api/leagues/${id}`, {
         method: 'DELETE',
         headers: {
             'Authorization': `Bearer ${token}`

@@ -22,13 +22,13 @@ export interface AddTeamData {
 
 
 export const getTeams = async (league_id: number): Promise<Team[]> => {
-    const response = await fetch(`http://localhost:3000/api/teams?leagueId=${league_id}`);
+    const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}`}/api/teams?leagueId=${league_id}`);
     if (!response.ok) throw new Error('Errore nel recupero dei team');
     return response.json();
 };
 
 export const getTeamById = async (id: number): Promise<Team> => {
-    const response = await fetch(`http://localhost:3000/api/teams/${id}`);
+    const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}`}/api/teams/${id}`);
     if (!response.ok) throw new Error('Errore nel recupero del team');
     return response.json();
 }
@@ -36,7 +36,7 @@ export const getTeamById = async (id: number): Promise<Team> => {
 export const postTeam = async (data: AddTeamData) => {
     const token = localStorage.getItem('adminToken');
     const { teamName: teamname, leagueId: league_id } = data;
-    const response = await fetch('http://localhost:3000/api/teams', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/teams`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ export const postTeam = async (data: AddTeamData) => {
 export const putTeam = async (data: ModifyTeamData) => {
     const token = localStorage.getItem('adminToken');
     const { id, teamname } = data;
-    const response = await fetch(`http://localhost:3000/api/teams/${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}`}/api/teams/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ export const putTeam = async (data: ModifyTeamData) => {
 
 export const delTeam = async (id: number) => {
     const token = localStorage.getItem('adminToken');
-    const response = await fetch(`http://localhost:3000/api/teams/${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}`}/api/teams/${id}`, {
         method: 'DELETE',
         headers: {
             'Authorization': `Bearer ${token}`

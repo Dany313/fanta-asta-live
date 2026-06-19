@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { useAuctionStore } from '../store/useAuctionStore';
 import { useQueryClient } from '@tanstack/react-query';
 
-export const socket = io('http://localhost:3000'); // Singleton
+export const socket = io(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}`); // Singleton
 
 export const useAuctionSocket = () => {
   const startAuction = useAuctionStore((state) => state.startAuction);

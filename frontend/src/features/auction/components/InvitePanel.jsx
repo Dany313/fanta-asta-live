@@ -61,7 +61,7 @@ export default function InvitePanel({ teams }) {
             alert('Token non disponibile');
             return;
         }
-        navigator.clipboard.writeText(`http://localhost:5173/join/${token}`);
+        navigator.clipboard.writeText(`${window.location.origin}/join/${token}`);
         alert(`Link copiato!`);
     };
 
