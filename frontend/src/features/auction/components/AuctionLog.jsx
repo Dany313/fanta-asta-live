@@ -3,10 +3,11 @@ import { Paper, Typography, List, ListItem, ListItemText, Box } from '@mui/mater
 
 const styles = {
     container: {
-        padding: '30px',
+        padding: { xs: '15px', sm: '30px' },
         backgroundColor: '#f8f9fa',
         borderRadius: '12px',
         border: '1px solid #f1f2f6',
+        boxSizing: 'border-box',
         boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
         width: '100%',
         height: { xs: '300px', md: '100%' },

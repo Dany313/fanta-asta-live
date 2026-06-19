@@ -4,9 +4,10 @@ import SendIcon from '@mui/icons-material/Send';
 
 const styles = {
     container: (isWinning) => ({
-        padding: '30px',
+        padding: { xs: '15px', sm: '30px' },
         backgroundColor: 'white',
         borderRadius: '12px',
+        boxSizing: 'border-box',
         boxShadow: isWinning ? '0 8px 25px rgba(46, 204, 113, 0.4)' : '0 8px 20px rgba(0,0,0,0.1)',
         textAlign: 'center',
         border: isWinning ? '3px solid #2ecc71' : '1px solid #f1f2f6',
@@ -97,7 +98,7 @@ export default function PlayerCard({ player, currentBid, onBid, isWinning, disab
     };
 
     return (
-        <Paper style={styles.container(isWinning)} elevation={0}>
+        <Paper sx={styles.container(isWinning)} elevation={0}>
             <Typography variant="subtitle2" style={styles.header}>
                 🔨 ASTA IN CORSO
             </Typography>
