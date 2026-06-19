@@ -27,11 +27,24 @@ export default function AdminDashboard() {
     const { leagueId } = useParams();
     const navigate = useNavigate();
 
+    const { data: teams = [], isSuccess: teamsLoaded } = useQuery({
+        queryKey: ['teams', leagueId],
+        queryFn: () => getTeams(leagueId),
+        enabled: !!leagueId
+    });
+
     useEffect(() => {
-        if (!localStorage.getItem('adminTeamId')) {
+        const currentAdminId = localStorage.getItem('adminTeamId');
+        if (!currentAdminId) {
             navigate(`/selectTeam/${leagueId}`);
+        } else if (teamsLoaded && teams.length > 0) {
+            const teamExists = teams.some(t => t.id === Number(currentAdminId));
+            if (!teamExists) {
+                localStorage.removeItem('adminTeamId');
+                navigate(`/selectTeam/${leagueId}`);
+            }
         }
-    }, [leagueId, navigate]);
+    }, [leagueId, navigate, teams, teamsLoaded]);
 
     // 1. Inizializza i WebSockets
     const socket = useAuctionSocket();
@@ -61,10 +74,7 @@ export default function AdminDashboard() {
         queryFn: getPlayers,
         select: (data) => data.filter(player => !roster.some(r => r.player_id === player.id)) // Filtra i giocatori già nel roster
     });
-    const { data: teams = [] } = useQuery({
-        queryKey: ['teams', leagueId],
-        queryFn: () => getTeams(leagueId)
-    });
+
 
     // 4. Client State (Solo cose visive)
     const [searchTerm, setSearchTerm] = useState("");

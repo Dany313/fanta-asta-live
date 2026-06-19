@@ -68,10 +68,16 @@ const SelectAdminTeamPage = () => {
     });
 
     useEffect(() => {
-        if (localStorage.getItem('adminTeamId')) {
-            navigate(`/auction/${leagueId}`);
+        const adminTeamId = localStorage.getItem('adminTeamId');
+        if (adminTeamId && teams.length > 0) {
+            const teamExists = teams.some(t => t.id === Number(adminTeamId));
+            if (teamExists) {
+                navigate(`/auction/${leagueId}`);
+            } else {
+                localStorage.removeItem('adminTeamId');
+            }
         }
-    }, [leagueId, navigate]);
+    }, [leagueId, navigate, teams]);
 
     const handleTeamSelect = (teamId) => {
         localStorage.setItem('adminTeamId', teamId);
