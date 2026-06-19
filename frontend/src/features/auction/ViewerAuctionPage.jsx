@@ -7,6 +7,7 @@ import Button from '@mui/material/Button';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 
 import InvitePanel from './components/InvitePanel'; // 🌟 IMPORTATO
+import TeamsOverviewGrid from './components/TeamsOverviewGrid';
 
 
 import { useParams } from 'react-router-dom';
@@ -89,6 +90,18 @@ export default function ViewerDashboard() {
     const viewerTeamId = Number(localStorage.getItem('viewerTeamId'));
     const isWinning = activeAuction?.highestBidderId === viewerTeamId;
 
+    let isRoleFull = false;
+    let disableReason = "";
+    if (activeAuction?.player && activeAuction?.teamRoleCounts) {
+        const playerRole = activeAuction.player.role;
+        const roleLimits = { 'P': 3, 'D': 8, 'C': 8, 'A': 6 };
+        const currentCount = (activeAuction.teamRoleCounts[viewerTeamId] && activeAuction.teamRoleCounts[viewerTeamId][playerRole]) || 0;
+        if (currentCount >= roleLimits[playerRole]) {
+            isRoleFull = true;
+            disableReason = `Reparto ${playerRole} pieno (${roleLimits[playerRole]}/${roleLimits[playerRole]})`;
+        }
+    }
+
     return (
         <div style={{ padding: '20px', fontFamily: 'Arial' }}>
 
@@ -129,6 +142,8 @@ export default function ViewerDashboard() {
                                 currentBid={activeAuction.highestBid}
                                 onBid={handleBid}
                                 isWinning={isWinning}
+                                disableBidding={isRoleFull}
+                                disableReason={disableReason}
                             />
                         </Box>
                         <Box flex={1} display="flex" flexDirection="column">
@@ -148,6 +163,13 @@ export default function ViewerDashboard() {
                     onPlayerClick={handleStartAuction}
                 />
             )}
+
+            <Box mt={5}>
+                <Typography variant="h5" style={{ fontWeight: 'bold', color: '#2f3542', marginBottom: '10px' }}>
+                    Visuale Rose
+                </Typography>
+                <TeamsOverviewGrid teams={teams} rosters={roster} isAdmin={false} />
+            </Box>
         </div>
     );
 }

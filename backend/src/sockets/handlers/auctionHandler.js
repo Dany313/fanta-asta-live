@@ -13,7 +13,8 @@ module.exports = (io, socket) => {
       activeAuction.highestBid, 
       activeAuction.highestBidderName, 
       activeAuction.history,
-      activeAuction.isSessionActive
+      activeAuction.isSessionActive,
+      activeAuction.teamRoleCounts
     );
     // Inviamo sempre lo stato (che contiene isSessionActive)
     socket.emit('auction_sync_data', stateDto);
@@ -32,12 +33,26 @@ module.exports = (io, socket) => {
       const teamsQuery = await db.query(`SELECT id, name, remaining_budget, max_possible_bid FROM teams`);
       const teams = teamsQuery.rows.map(TeamMapper.toEntity);
       
+      const rostersQuery = await db.query(`
+        SELECT r.team_id, p.role, COUNT(*) as count
+        FROM rosters r
+        JOIN players p ON r.player_id = p.id
+        GROUP BY r.team_id, p.role
+      `);
+      
+      const roleCounts = {};
+      rostersQuery.rows.forEach(row => {
+        if (!roleCounts[row.team_id]) roleCounts[row.team_id] = { P: 0, D: 0, C: 0, A: 0 };
+        roleCounts[row.team_id][row.role] = parseInt(row.count, 10);
+      });
+
       const budgets = {};
       const maxBids = {};
       
       teams.forEach(t => {
         budgets[t.id] = t.remainingBudget;
         maxBids[t.id] = t.maxPossibleBid;
+        if (!roleCounts[t.id]) roleCounts[t.id] = { P: 0, D: 0, C: 0, A: 0 };
       });
 
       // Reset e inizializzazione stato
@@ -45,13 +60,15 @@ module.exports = (io, socket) => {
       activeAuction.player = playerData;
       activeAuction.teamBudgets = budgets;
       activeAuction.maxPossibleBids = maxBids;
+      activeAuction.teamRoleCounts = roleCounts;
 
       const stateDto = new AuctionStateDto(
         activeAuction.player, 
         activeAuction.highestBid, 
         activeAuction.highestBidderName, 
         activeAuction.history,
-        activeAuction.isSessionActive
+        activeAuction.isSessionActive,
+        activeAuction.teamRoleCounts
       );
       io.emit('auction_started', stateDto);
       console.log(`🔨 Asta iniziata (Admin) per ${playerData.name}`);
@@ -96,7 +113,8 @@ module.exports = (io, socket) => {
         activeAuction.highestBid, 
         activeAuction.highestBidderName, 
         activeAuction.history,
-        activeAuction.isSessionActive
+        activeAuction.isSessionActive,
+        activeAuction.teamRoleCounts
       );
       io.emit('auction_started', stateDto);
       console.log(`🔨 Asta iniziata (Viewer) per ${player.name} da ${teamName}`);
@@ -120,11 +138,21 @@ module.exports = (io, socket) => {
     const maxBudget = activeAuction.teamBudgets[bidDto.teamId] || 0;
     const maxPossibleBid = activeAuction.maxPossibleBids[bidDto.teamId] || 500;
     
+    // Controlli budget
     if (bidDto.amount > maxPossibleBid) {
       return socket.emit('bid_error', { message: `Offerta supera il limite massimo (${maxPossibleBid})` });
     }
     if (bidDto.amount > maxBudget) {
       return socket.emit('bid_error', { message: `Crediti insufficienti (${maxBudget})` });
+    }
+
+    // Controllo limiti ruolo
+    const playerRole = activeAuction.player.role;
+    const roleLimits = { 'P': 3, 'D': 8, 'C': 8, 'A': 6 };
+    const currentCount = (activeAuction.teamRoleCounts[bidDto.teamId] && activeAuction.teamRoleCounts[bidDto.teamId][playerRole]) || 0;
+    
+    if (currentCount >= roleLimits[playerRole]) {
+      return socket.emit('bid_error', { message: `Hai già raggiunto il limite di ${roleLimits[playerRole]} giocatori per il ruolo ${playerRole}` });
     }
 
     // Aggiornamento stato

@@ -78,7 +78,7 @@ const styles = {
     }
 };
 
-export default function PlayerCard({ player, currentBid, onBid, isWinning }) {
+export default function PlayerCard({ player, currentBid, onBid, isWinning, disableBidding, disableReason }) {
     const [customBid, setCustomBid] = useState('');
 
     if (!player) return null;
@@ -134,6 +134,7 @@ export default function PlayerCard({ player, currentBid, onBid, isWinning }) {
                                 variant="contained" 
                                 color="success" 
                                 onClick={() => handleQuickBid(amount)}
+                                disabled={disableBidding}
                                 style={styles.quickBidButton}
                             >
                                 +{amount}
@@ -156,12 +157,18 @@ export default function PlayerCard({ player, currentBid, onBid, isWinning }) {
                             color="primary" 
                             type="submit"
                             endIcon={<SendIcon />}
-                            disabled={!customBid}
+                            disabled={!customBid || disableBidding}
                             style={{ borderRadius: '8px', fontWeight: 'bold' }}
                         >
                             Rilancia
                         </Button>
                     </form>
+                    
+                    {disableBidding && (
+                        <Typography variant="body2" style={{ color: '#e74c3c', marginTop: '15px', fontWeight: 'bold' }}>
+                            ⛔ {disableReason}
+                        </Typography>
+                    )}
                 </Box>
             )}
         </Paper>

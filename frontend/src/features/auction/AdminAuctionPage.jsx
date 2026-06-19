@@ -9,6 +9,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import StopIcon from '@mui/icons-material/Stop';
 
 import InvitePanel from './components/InvitePanel'; // 🌟 IMPORTATO
+import TeamsOverviewGrid from './components/TeamsOverviewGrid';
 
 
 import { useParams } from 'react-router-dom';
@@ -113,6 +114,18 @@ export default function AdminDashboard() {
     const adminTeamId = Number(localStorage.getItem('adminTeamId'));
     const isWinning = activeAuction?.highestBidderId === adminTeamId;
 
+    let isRoleFull = false;
+    let disableReason = "";
+    if (activeAuction?.player && activeAuction?.teamRoleCounts) {
+        const playerRole = activeAuction.player.role;
+        const roleLimits = { 'P': 3, 'D': 8, 'C': 8, 'A': 6 };
+        const currentCount = (activeAuction.teamRoleCounts[adminTeamId] && activeAuction.teamRoleCounts[adminTeamId][playerRole]) || 0;
+        if (currentCount >= roleLimits[playerRole]) {
+            isRoleFull = true;
+            disableReason = `Reparto ${playerRole} pieno (${roleLimits[playerRole]}/${roleLimits[playerRole]})`;
+        }
+    }
+
     return (
         <div style={{ padding: '20px', fontFamily: 'Arial' }}>
             {/* ... Intestazione identica al tuo codice ... */}
@@ -172,6 +185,8 @@ export default function AdminDashboard() {
                                 currentBid={activeAuction.highestBid}
                                 onBid={handleAdminBid}
                                 isWinning={isWinning}
+                                disableBidding={isRoleFull}
+                                disableReason={disableReason}
                             />
                             <Button 
                                 variant="contained" 
@@ -204,6 +219,13 @@ export default function AdminDashboard() {
                     onPlayerClick={handleStartAuction}
                 />
             )}
+
+            <Box mt={5}>
+                <Typography variant="h5" style={{ fontWeight: 'bold', color: '#2f3542', marginBottom: '10px' }}>
+                    Visuale Rose
+                </Typography>
+                <TeamsOverviewGrid teams={teams} rosters={roster} isAdmin={true} />
+            </Box>
         </div>
     );
 }

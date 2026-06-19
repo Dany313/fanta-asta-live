@@ -1,5 +1,5 @@
 class AuctionStateDto {
-  constructor(player, highestBid, highestBidderName, history, isSessionActive = false) {
+  constructor(player, highestBid, highestBidderName, history, isSessionActive = false, teamRoleCounts = {}) {
     this.player = player; // Può essere un Player Entity o un oggetto semplice
     this.highestBid = highestBid;
     this.highestBidderName = highestBidderName || "Nessuno";
@@ -7,6 +7,7 @@ class AuctionStateDto {
     this.history = history ? history.slice(0, 10) : [];
     this.status = player ? "ACTIVE" : "WAITING";
     this.isSessionActive = isSessionActive;
+    this.teamRoleCounts = teamRoleCounts;
   }
 }
 
