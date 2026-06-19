@@ -18,7 +18,7 @@ import { getPlayers } from '../../api/playersApi';
 import { getRosterByLeague } from '../../api/rosterApi';
 import { getTeams } from '../../api/teamsApi';
 import AdminCustomBet from './components/AdminCustomBet';
-import { Stack, Box, Typography, Paper } from '@mui/material';
+import { Stack, Box, Typography, Paper, CircularProgress } from '@mui/material';
 import AssignPlayerButton from './components/AssignPlayerButton';
 
 export default function ViewerDashboard() {
@@ -39,16 +39,30 @@ export default function ViewerDashboard() {
     // 2. Leggi lo stato in tempo reale da Zustand
     const activeAuction = useAuctionStore((state) => state.activeAuction);
     const isSessionActive = useAuctionStore((state) => state.isSessionActive);
+    const isInitializing = useAuctionStore((state) => state.isInitializing);
 
     useEffect(() => {
         if (socket) {
             const handleAbort = () => {
                 useAuctionStore.setState({ activeAuction: {} });
             };
+            const handleForceLogout = (data) => {
+                if (data.teamId === Number(localStorage.getItem('viewerTeamId'))) {
+                    alert('Sei stato disconnesso dall\'amministratore.');
+                    localStorage.removeItem('viewerTeamId');
+                    localStorage.removeItem('viewerTeamName');
+                    localStorage.removeItem('viewerToken');
+                    navigate('/');
+                }
+            };
             socket.on('auction_aborted', handleAbort);
-            return () => socket.off('auction_aborted', handleAbort);
+            socket.on('force_logout', handleForceLogout);
+            return () => {
+                socket.off('auction_aborted', handleAbort);
+                socket.off('force_logout', handleForceLogout);
+            };
         }
-    }, [socket]);
+    }, [socket, navigate]);
 
     const { data: roster = [] } = useQuery({
         queryKey: ['roster', leagueId],
@@ -103,7 +117,17 @@ export default function ViewerDashboard() {
         }
     }
 
-    // 4. Se la sessione non è attiva, mostra una schermata di fine asta
+    // 4. Se in fase di inizializzazione, mostra un caricamento
+    if (isInitializing) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column', gap: '20px' }}>
+                <CircularProgress />
+                <Typography variant="body1" color="textSecondary">Connessione alla sessione d'asta in corso...</Typography>
+            </div>
+        );
+    }
+
+    // 5. Se la sessione non è attiva, mostra una schermata di fine asta
     if (socket && !isSessionActive) {
         return (
             <div style={{ padding: '40px 20px', fontFamily: 'Arial', textAlign: 'center' }}>

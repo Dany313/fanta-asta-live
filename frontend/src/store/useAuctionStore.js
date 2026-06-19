@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export const useAuctionStore = create((set) => ({
   activeAuction: null,
   isSessionActive: false,
+  isInitializing: true,
   
   // Azioni chiamate dai WebSockets
   startAuction: (data) => set({ activeAuction: data }),
@@ -17,5 +18,6 @@ export const useAuctionStore = create((set) => ({
     } : null
   })),
   clearAuction: () => set({ activeAuction: null }),
-  setSessionActive: (isActive) => set({ isSessionActive: isActive })
+  setSessionActive: (isActive) => set({ isSessionActive: isActive }),
+  setInitializing: (isInit) => set({ isInitializing: isInit })
 }));
