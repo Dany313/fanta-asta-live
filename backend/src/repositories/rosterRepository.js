@@ -4,14 +4,22 @@ const pool = require('../config/db');
 class RosterRepository {
   // Metodi di lettura base (che usavi nel controller)
   async findAllByTeamId(teamId, dbClient = pool) {
-    const { rows } = await dbClient.query('SELECT * FROM rosters WHERE team_id = $1', [teamId]);
-    return { rows }; // Manteniamo la struttura per non rompere il tuo controller
+    const query = `
+      SELECT r.*, p.name, p.role, p.club 
+      FROM rosters r 
+      JOIN players p ON r.player_id = p.id 
+      WHERE r.team_id = $1
+    `;
+    const { rows } = await dbClient.query(query, [teamId]);
+    return { rows };
   }
 
   async findAllByLeagueId(leagueId, dbClient = pool) {
     const query = `
-      SELECT r.* FROM rosters r 
+      SELECT r.*, p.name, p.role, p.club 
+      FROM rosters r 
       JOIN teams t ON r.team_id = t.id 
+      JOIN players p ON r.player_id = p.id
       WHERE t.league_id = $1
     `;
     const { rows } = await dbClient.query(query, [leagueId]);
