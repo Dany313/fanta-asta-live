@@ -106,7 +106,7 @@ export default function ViewerDashboard() {
         <div style={{ padding: '20px', fontFamily: 'Arial' }}>
 
             {!activeAuction?.player && (
-                <Stack direction="row" justifyContent="space-between" alignItems="start" style={{ marginBottom: '30px' }}>
+                <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', md: 'start' }} spacing={2} style={{ marginBottom: '30px' }}>
                     <Box>
                         <Button
                             variant="contained"
@@ -135,7 +135,7 @@ export default function ViewerDashboard() {
             {activeAuction?.player && (
 
                 <div style={{ marginBottom: '40px', position: 'relative' }}>
-                    <Stack direction="row" justifyContent="center" alignItems="stretch" spacing={4} marginBottom={3}>
+                    <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="center" alignItems="stretch" spacing={4} marginBottom={3}>
                         <Box flex={1} display="flex" flexDirection="column">
                             <PlayerCard
                                 player={activeAuction.player}

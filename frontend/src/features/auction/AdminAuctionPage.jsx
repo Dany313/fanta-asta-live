@@ -140,14 +140,14 @@ export default function AdminDashboard() {
         <div style={{ padding: '20px', fontFamily: 'Arial' }}>
             {/* ... Intestazione identica al tuo codice ... */}
 
-            <Stack direction="row" justifyContent="space-between" alignItems="start" style={{ marginBottom: '30px' }}>
+            <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', md: 'start' }} spacing={2} style={{ marginBottom: '30px' }}>
                 <Box>
                     <InvitePanel teams={teams} />
                     <Typography variant="subtitle1" style={{ marginTop: '10px', color: '#7f8c8d' }}>
                         👤 Collegato come: <strong>{teams.find(t => t.id === Number(localStorage.getItem('adminTeamId')))?.name || 'Sconosciuto'}</strong> (Admin)
                     </Typography>
                 </Box>
-                <Stack direction="row" spacing={2}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                     <Button
                         variant="contained"
                         startIcon={<FormatListBulletedIcon />}
@@ -188,7 +188,7 @@ export default function AdminDashboard() {
 
                 <div style={{ marginBottom: '40px', position: 'relative' }}>
                     <AdminCustomBet teams={teams} handleCustomBet={handleAdminBid} />
-                    <Stack direction="row" justifyContent="center" alignItems="stretch" spacing={4} marginBottom={3}>
+                    <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="center" alignItems="stretch" spacing={4} marginBottom={3}>
                         <Box flex={1} display="flex" flexDirection="column" gap={2}>
                             <PlayerCard
                                 player={activeAuction.player}
