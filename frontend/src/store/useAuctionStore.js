@@ -12,6 +12,7 @@ export const useAuctionStore = create((set) => ({
       ...state.activeAuction,
       highestBid: update.highestBid,
       highestBidderName: update.highestBidderName,
+      highestBidderId: update.highestBidderId,
       history: update.history
     } : null
   })),

@@ -12,6 +12,7 @@ module.exports = (io, socket) => {
       activeAuction.player, 
       activeAuction.highestBid, 
       activeAuction.highestBidderName, 
+      activeAuction.highestBidderId,
       activeAuction.history,
       activeAuction.isSessionActive,
       activeAuction.teamRoleCounts
@@ -66,6 +67,7 @@ module.exports = (io, socket) => {
         activeAuction.player, 
         activeAuction.highestBid, 
         activeAuction.highestBidderName, 
+        activeAuction.highestBidderId,
         activeAuction.history,
         activeAuction.isSessionActive,
         activeAuction.teamRoleCounts
@@ -112,6 +114,7 @@ module.exports = (io, socket) => {
         activeAuction.player, 
         activeAuction.highestBid, 
         activeAuction.highestBidderName, 
+        activeAuction.highestBidderId,
         activeAuction.history,
         activeAuction.isSessionActive,
         activeAuction.teamRoleCounts
@@ -172,8 +175,10 @@ module.exports = (io, socket) => {
       activeAuction.player,
       activeAuction.highestBid,
       activeAuction.highestBidderName,
+      activeAuction.highestBidderId,
       activeAuction.history,
-      activeAuction.isSessionActive
+      activeAuction.isSessionActive,
+      activeAuction.teamRoleCounts
     );
     io.emit('auction_update', stateDto);
     console.log(`💰 ${bidDto.teamName} offre ${bidDto.amount}`);

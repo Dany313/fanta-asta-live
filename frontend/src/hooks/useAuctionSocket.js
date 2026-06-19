@@ -28,6 +28,7 @@ export const useAuctionSocket = () => {
         // React Query rifarà in automatico la fetch di giocatori e squadre in background
         queryClient.invalidateQueries({ queryKey: ['players'] });
         queryClient.invalidateQueries({ queryKey: ['teams'] });
+        queryClient.invalidateQueries({ queryKey: ['roster'] });
       } else {
         alert("❌ Errore: " + response.message);
       }
