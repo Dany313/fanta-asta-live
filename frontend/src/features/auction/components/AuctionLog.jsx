@@ -8,7 +8,7 @@ const styles = {
         borderRadius: '12px',
         border: '1px solid #f1f2f6',
         boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
-        minWidth: '300px',
+        width: '100%',
         height: { xs: '300px', md: '100%' },
         maxHeight: { xs: '400px', md: '600px' },
         display: 'flex',

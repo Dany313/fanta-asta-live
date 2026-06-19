@@ -16,7 +16,7 @@ const styles = {
         paddingBottom: '20px'
     },
     teamColumn: {
-        minWidth: '320px',
+        minWidth: '260px',
         backgroundColor: '#fff',
         borderRadius: '12px',
         boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
