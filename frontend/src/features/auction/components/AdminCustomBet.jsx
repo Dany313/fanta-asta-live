@@ -64,9 +64,6 @@ export default function AdminCustomBet({ teams, handleCustomBet }) {
     const bet = () => {
         if (!selectedTeam || betAmount <= 0) return;
         handleCustomBet(selectedTeam, betAmount);
-        // Reset form
-        setSelectedTeam('');
-        setBetAmount(1);
     }
 
     return (

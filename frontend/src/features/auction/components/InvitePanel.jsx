@@ -12,7 +12,7 @@ import Tooltip from '@mui/material/Tooltip';
 import GroupIcon from '@mui/icons-material/Group';
 import LinkIcon from '@mui/icons-material/Link';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
-import { useAuctionSocket } from '../../../hooks/useAuctionSocket';
+import { socket } from '../../../hooks/useAuctionSocket';
 
 const styles = {
     container: {
@@ -51,7 +51,6 @@ const styles = {
 
 export default function InvitePanel({ teams }) {
     const [open, setOpen] = useState(false);
-    const socket = useAuctionSocket();
 
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
