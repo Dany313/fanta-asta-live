@@ -206,9 +206,25 @@ export default function TeamsOverviewGrid({ teams, rosters, isAdmin }) {
                                 const rolePlayers = teamRosters.filter(p => p.role === config.role);
                                 const numSlots = Math.max(config.minSlots, rolePlayers.length);
                                 
+                                const totalSpent = teamRosters.reduce((sum, p) => sum + p.purchase_price, 0);
+                                const initialBudget = (team.remaining_budget ?? team.remainingBudget) + totalSpent || 500;
+                                const spentForRole = rolePlayers.reduce((sum, p) => sum + p.purchase_price, 0);
+                                const rolePerc = initialBudget > 0 ? ((spentForRole / initialBudget) * 100).toFixed(1) : 0;
+                                
                                 const slots = [];
+                                
+                                slots.push(
+                                    <Box key={`header-${config.role}`} style={{ backgroundColor: '#f1f2f6', padding: '5px 12px', borderBottom: '1px solid #dfe4ea' }}>
+                                        <Typography variant="caption" style={{ fontWeight: 'bold', color: '#2f3542', textTransform: 'uppercase' }}>
+                                            {config.label} - Spesi: {spentForRole} ({rolePerc}%)
+                                        </Typography>
+                                    </Box>
+                                );
+                                
                                 for (let i = 0; i < numSlots; i++) {
                                     const player = rolePlayers[i];
+                                    const playerPerc = player ? (initialBudget > 0 ? ((player.purchase_price / initialBudget) * 100).toFixed(1) : 0) : 0;
+                                    
                                     slots.push(
                                         <Box key={`${config.role}-${i}`} style={styles.slotRow}>
                                             <Avatar sx={styles.roleBadge(config.role)}>{config.role}</Avatar>
@@ -220,7 +236,12 @@ export default function TeamsOverviewGrid({ teams, rosters, isAdmin }) {
                                                         <Typography style={styles.clubText}>{player.club}</Typography>
                                                     </Box>
                                                     
-                                                    <Chip label={player.purchase_price} size="small" style={{ fontWeight: 'bold', marginRight: '5px' }} />
+                                                    <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: '5px' }}>
+                                                        <Chip label={player.purchase_price} size="small" style={{ fontWeight: 'bold' }} />
+                                                        <Typography variant="caption" style={{ color: '#7f8c8d', fontSize: '10px' }}>
+                                                            {playerPerc}%
+                                                        </Typography>
+                                                    </Box>
                                                     
                                                     {isAdmin && (
                                                         <Stack direction="row" spacing={0.5}>

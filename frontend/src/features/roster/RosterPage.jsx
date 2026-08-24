@@ -151,6 +151,7 @@ const RosterPage = () => {
                 </Box>
             ) : (
                 <RosterList
+                    team={team}
                     players={roster}
                     allPlayers={allPlayers}
                     onAdd={addPlayer}

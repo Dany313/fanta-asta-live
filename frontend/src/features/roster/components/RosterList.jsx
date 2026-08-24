@@ -78,7 +78,7 @@ const styles = {
     }
 };
 
-export default function RosterList({ players, allPlayers, onAdd, onUpdate, onDelete }) {
+export default function RosterList({ team, players, allPlayers, onAdd, onUpdate, onDelete }) {
     // State per l'aggiunta
     const [selectedPlayer, setSelectedPlayer] = useState(null);
     const [purchasePrice, setPurchasePrice] = useState(1);
@@ -99,6 +99,15 @@ export default function RosterList({ players, allPlayers, onAdd, onUpdate, onDel
     }, [players]);
 
     const totalSpent = useMemo(() => players.reduce((sum, p) => sum + p.purchase_price, 0), [players]);
+    const initialBudget = team ? (team.remaining_budget ?? team.remainingBudget) + totalSpent : (totalSpent > 0 ? totalSpent : 500);
+    
+    const roleStats = useMemo(() => {
+        const stats = { 'P': 0, 'D': 0, 'C': 0, 'A': 0 };
+        players.forEach(p => {
+            if (stats[p.role] !== undefined) stats[p.role] += p.purchase_price;
+        });
+        return stats;
+    }, [players]);
 
     // Handlers
     const handleAdd = () => {
@@ -200,44 +209,76 @@ export default function RosterList({ players, allPlayers, onAdd, onUpdate, onDel
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                sortedPlayers.map((player) => (
-                                    <TableRow key={player.player_id} hover>
-                                        <TableCell>
-                                            <Avatar sx={styles.roleBadge(player.role)}>
-                                                {player.role}
-                                            </Avatar>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="subtitle1" style={{ fontWeight: 'bold', color: '#2f3542' }}>
-                                                {player.name}
-                                            </Typography>
-                                            <Typography variant="caption" style={{ color: '#7f8c8d' }}>
-                                                {player.club}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell align="right">
-                                            <Chip label={`${player.purchase_price} FM`} size="small" variant="outlined" style={{ fontWeight: 'bold' }} />
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            <Stack direction="row" spacing={1} justifyContent="center">
-                                                <IconButton 
-                                                    size="small" 
-                                                    color="primary" 
-                                                    onClick={() => openEdit(player)}
-                                                >
-                                                    <EditIcon />
-                                                </IconButton>
-                                                <IconButton 
-                                                    size="small" 
-                                                    color="error" 
-                                                    onClick={() => handleDeleteClick(player)}
-                                                >
-                                                    <DeleteIcon />
-                                                </IconButton>
-                                            </Stack>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+                                (() => {
+                                    let currentRole = null;
+                                    return sortedPlayers.map((player) => {
+                                        const roleRows = [];
+                                        
+                                        if (player.role !== currentRole) {
+                                            currentRole = player.role;
+                                            const spentForRole = roleStats[currentRole] || 0;
+                                            const rolePerc = initialBudget > 0 ? ((spentForRole / initialBudget) * 100).toFixed(1) : 0;
+                                            
+                                            const roleNames = { 'P': 'Portieri', 'D': 'Difensori', 'C': 'Centrocampisti', 'A': 'Attaccanti' };
+                                            
+                                            roleRows.push(
+                                                <TableRow key={`header-${currentRole}`} style={{ backgroundColor: '#f5f6fa' }}>
+                                                    <TableCell colSpan={4} style={{ padding: '8px 16px' }}>
+                                                        <Typography variant="subtitle2" style={{ fontWeight: 'bold', color: '#2f3542' }}>
+                                                            {roleNames[currentRole]} - Spesi: {spentForRole} FM ({rolePerc}%)
+                                                        </Typography>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        }
+                                        
+                                        const playerPerc = initialBudget > 0 ? ((player.purchase_price / initialBudget) * 100).toFixed(1) : 0;
+
+                                        roleRows.push(
+                                            <TableRow key={player.player_id} hover>
+                                                <TableCell>
+                                                    <Avatar sx={styles.roleBadge(player.role)}>
+                                                        {player.role}
+                                                    </Avatar>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="subtitle1" style={{ fontWeight: 'bold', color: '#2f3542' }}>
+                                                        {player.name}
+                                                    </Typography>
+                                                    <Typography variant="caption" style={{ color: '#7f8c8d' }}>
+                                                        {player.club}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell align="right">
+                                                    <Chip label={`${player.purchase_price} FM`} size="small" variant="outlined" style={{ fontWeight: 'bold' }} />
+                                                    <Typography variant="caption" display="block" style={{ color: '#7f8c8d', marginTop: '4px' }}>
+                                                        {playerPerc}%
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Stack direction="row" spacing={1} justifyContent="center">
+                                                        <IconButton 
+                                                            size="small" 
+                                                            color="primary" 
+                                                            onClick={() => openEdit(player)}
+                                                        >
+                                                            <EditIcon />
+                                                        </IconButton>
+                                                        <IconButton 
+                                                            size="small" 
+                                                            color="error" 
+                                                            onClick={() => handleDeleteClick(player)}
+                                                        >
+                                                            <DeleteIcon />
+                                                        </IconButton>
+                                                    </Stack>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                        
+                                        return roleRows;
+                                    });
+                                })()
                             )}
                         </TableBody>
                     </Table>
