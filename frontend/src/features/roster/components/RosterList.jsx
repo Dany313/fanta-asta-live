@@ -142,7 +142,7 @@ export default function RosterList({ players, allPlayers, onAdd, onUpdate, onDel
                 <Typography style={styles.sectionTitle}>
                     ➕ Aggiungi Giocatore
                 </Typography>
-                <Box style={styles.formRow}>
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, alignItems: { xs: 'stretch', sm: 'center' } }}>
                     <Autocomplete
                         options={allPlayers}
                         getOptionLabel={(option) => `${option.name} (${option.role}) - ${option.club}`}
@@ -165,7 +165,7 @@ export default function RosterList({ players, allPlayers, onAdd, onUpdate, onDel
                         value={purchasePrice}
                         onChange={(e) => setPurchasePrice(parseInt(e.target.value) || 0)}
                         size="small"
-                        sx={{ width: '120px' }}
+                        sx={{ width: { xs: '100%', sm: '120px' } }}
                         InputProps={{ inputProps: { min: 1 } }}
                     />
                     <Button

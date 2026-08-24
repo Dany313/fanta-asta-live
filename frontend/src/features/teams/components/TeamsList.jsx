@@ -103,7 +103,7 @@ export default function TeamsList({ teams, onAdd, onUpdate, onDelete }) {
     return (
         <div>
             {/* SEZIONE AGGIUNTA SQUADRA */}
-            <Paper style={styles.addSection} elevation={0}>
+            <Paper style={styles.addSection} elevation={0} sx={{ flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 0 } }}>
                 <Typography style={styles.sectionTitle}>
                     <GroupsIcon style={{ verticalAlign: 'middle', marginRight: '8px', color: '#7f8c8d' }} />
                     Elenco Squadre ({teams.length})

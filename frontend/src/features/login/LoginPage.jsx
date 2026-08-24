@@ -9,11 +9,11 @@ const styles = {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        height: '100vh',
-        backgroundColor: '#f1f2f6'
+        minHeight: '100vh',
+        backgroundColor: '#f1f2f6',
+        padding: '20px'
     },
     paper: {
-        padding: '40px',
         borderRadius: '12px',
         boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
         display: 'flex',
@@ -77,7 +77,7 @@ export default function LoginPage() {
 
   return (
     <Box style={styles.container}>
-      <Paper style={styles.paper} elevation={3}>
+      <Paper style={styles.paper} sx={{ p: { xs: 3, sm: 5 } }} elevation={3}>
         <Avatar style={styles.avatar}>
             <LockOutlinedIcon />
         </Avatar>

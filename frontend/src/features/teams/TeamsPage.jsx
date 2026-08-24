@@ -115,7 +115,7 @@ const TeamsPage = () => {
 
     return (
         <Box style={styles.container}>
-            <Paper style={styles.headerPaper} elevation={0}>
+            <Paper style={styles.headerPaper} elevation={0} sx={{ flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'stretch', md: 'center' }, gap: 2 }}>
                 <Box style={styles.headerTitleBox}>
                     <GroupsIcon style={{ fontSize: 40, color: '#3498db' }} />
                     <Box>
@@ -127,7 +127,7 @@ const TeamsPage = () => {
                         </Typography>
                     </Box>
                 </Box>
-                <Stack direction="row" spacing={2}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                     <Button 
                         variant="outlined" 
                         color="primary"

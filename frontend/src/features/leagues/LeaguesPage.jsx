@@ -83,7 +83,7 @@ const LeaguesPage = () => {
 
     return (
         <Box style={styles.container}>
-            <Paper style={styles.headerPaper} elevation={0}>
+            <Paper style={styles.headerPaper} elevation={0} sx={{ flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'stretch', md: 'center' } }}>
                 <Box display="flex" alignItems="center" gap={2}>
                     <EmojiEventsIcon style={{ fontSize: 40, color: '#f1c40f' }} />
                     <Box>
@@ -97,12 +97,13 @@ const LeaguesPage = () => {
                 </Box>
                 
                 {/* Upload Excel Buttons */}
-                <Box display="flex" gap={2}>
+                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2} mt={{ xs: 2, md: 0 }}>
                     <Button 
                         variant="outlined" 
                         color="primary" 
                         startIcon={<UploadFileIcon />}
                         onClick={() => setUploadModalState({ open: true, mode: 'repair' })}
+                        fullWidth
                     >
                         Carica listone per asta di riparazione
                     </Button>
@@ -111,6 +112,7 @@ const LeaguesPage = () => {
                         color="error" 
                         startIcon={<UploadFileIcon />}
                         onClick={() => setUploadModalState({ open: true, mode: 'new_season' })}
+                        fullWidth
                     >
                         Carica listone per nuova stagione
                     </Button>

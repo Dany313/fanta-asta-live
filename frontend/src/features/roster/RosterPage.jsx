@@ -122,21 +122,24 @@ const RosterPage = () => {
 
     return (
         <Box style={styles.container}>
-            <Paper style={styles.headerPaper} elevation={0}>
-                <GroupIcon style={{ fontSize: 40, color: '#3498db' }} />
-                <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h5" style={styles.headerTitle}>
-                        Gestione Rosa {team ? `- ${team.name}` : ''}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                        Budget Rimanente: <strong>{team?.remainingBudget ?? '-'} FM</strong> | 
-                        Puntata Massima: <strong>{team?.maxPossibleBid ?? '-'} FM</strong>
-                    </Typography>
+            <Paper style={styles.headerPaper} elevation={0} sx={{ flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' } }}>
+                <Box display="flex" alignItems="center" gap={2} sx={{ flexGrow: 1 }}>
+                    <GroupIcon style={{ fontSize: 40, color: '#3498db' }} />
+                    <Box>
+                        <Typography variant="h5" style={styles.headerTitle}>
+                            Gestione Rosa {team ? `- ${team.name}` : ''}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                            Budget: <strong>{team?.remainingBudget ?? '-'}</strong> | 
+                            Max: <strong>{team?.maxPossibleBid ?? '-'}</strong>
+                        </Typography>
+                    </Box>
                 </Box>
                 <Button 
                     variant="outlined" 
                     startIcon={<EditIcon />} 
                     onClick={handleOpenEditBudget}
+                    sx={{ mt: { xs: 2, sm: 0 } }}
                 >
                     Modifica Budget
                 </Button>
