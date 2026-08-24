@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { uploadListone } from '../../../api/playersApi';
 
-export default function UploadListoneModal({ open, onClose, onSuccess }) {
+export default function UploadListoneModal({ open, mode, onClose, onSuccess }) {
     const [file, setFile] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -35,7 +35,7 @@ export default function UploadListoneModal({ open, onClose, onSuccess }) {
         setError(null);
 
         try {
-            await uploadListone(file);
+            await uploadListone(file, mode);
             setIsLoading(false);
             setFile(null);
             if (onSuccess) onSuccess();
@@ -55,12 +55,20 @@ export default function UploadListoneModal({ open, onClose, onSuccess }) {
 
     return (
         <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" disableEscapeKeyDown={isLoading}>
-            <DialogTitle>Carica Listone Excel</DialogTitle>
+            <DialogTitle>
+                {mode === 'new_season' ? 'Carica Listone per Nuova Stagione' : 'Carica Listone per Asta di Riparazione'}
+            </DialogTitle>
             <DialogContent>
                 <Box display="flex" flexDirection="column" gap={2} mt={1}>
                     <Typography variant="body1">
                         Seleziona il file <b>Quotazioni</b> in formato Excel (.xlsx) scaricato direttamente dal sito Leghe Fantacalcio.
                     </Typography>
+                    
+                    {mode === 'new_season' && (
+                        <Alert severity="error" sx={{ mt: 1, mb: 1 }}>
+                            <strong>ATTENZIONE:</strong> Questa operazione cancellerà irrevocabilmente TUTTE le leghe, le squadre e le rose attuali dal database. Usala solo per iniziare un campionato da zero!
+                        </Alert>
+                    )}
                     
                     {error && <Alert severity="error">{error}</Alert>}
                     
@@ -100,10 +108,10 @@ export default function UploadListoneModal({ open, onClose, onSuccess }) {
                 <Button 
                     onClick={handleUpload} 
                     variant="contained" 
-                    color="primary" 
+                    color={mode === 'new_season' ? 'error' : 'primary'} 
                     disabled={!file || isLoading}
                 >
-                    {isLoading ? 'Caricamento...' : 'Carica Giocatori'}
+                    {isLoading ? 'Caricamento...' : (mode === 'new_season' ? 'Conferma e Cancella Dati' : 'Carica Giocatori')}
                 </Button>
             </DialogActions>
         </Dialog>

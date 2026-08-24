@@ -11,7 +11,7 @@ class PlayerService {
         return await playerRepository.findAllAvailableByLeagueId(leagueId);
     }
 
-    async importPlayersFromBuffer(buffer) {
+    async importPlayersFromBuffer(buffer, mode = 'repair') {
         let client;
         try {
             const workbook = xlsx.read(buffer, { type: 'buffer' });
@@ -21,7 +21,13 @@ class PlayerService {
             client = await db.connect();
             await client.query('BEGIN');
 
-            await client.query('UPDATE players SET is_active = false');
+            if (mode === 'new_season') {
+                // DELETE FROM leagues deletes everything (teams, rosters) due to ON DELETE CASCADE
+                await client.query('DELETE FROM leagues');
+                await client.query('DELETE FROM players');
+            } else {
+                await client.query('UPDATE players SET is_active = false');
+            }
 
             const upsertQuery = `
               INSERT INTO players (
@@ -51,41 +57,49 @@ class PlayerService {
                 updatedCount++;
             }
 
-            // RIMBORSI: Trova giocatori in rosa che non sono più attivi
-            const cutPlayersQuery = `
-                SELECT r.id as roster_id, r.team_id, r.purchase_price, p.name as player_name 
-                FROM rosters r
-                JOIN players p ON r.player_id = p.id
-                WHERE p.is_active = false
-            `;
-            const cutPlayers = await client.query(cutPlayersQuery);
-            
+
+
+            let refundsProcessed = 0;
             const refundedTeams = [];
 
-            for (const row of cutPlayers.rows) {
-                const { roster_id, team_id, purchase_price, player_name } = row;
-                
-                // Rimborsa budget e ripristina la max bid esatta 
-                // (+ purchase_price + 1 perché l'acquisto faceva - price - 1)
-                await client.query(`
-                    UPDATE teams 
-                    SET remaining_budget = remaining_budget + $1,
-                        max_possible_bid = max_possible_bid + $1 + 1
-                    WHERE id = $2
-                `, [purchase_price, team_id]);
+            if (mode === 'repair') {
+                // RIMBORSI: Trova giocatori in rosa che non sono più attivi
+                const cutPlayersQuery = `
+                    SELECT r.id as roster_id, r.team_id, r.purchase_price, p.name as player_name 
+                    FROM rosters r
+                    JOIN players p ON r.player_id = p.id
+                    WHERE p.is_active = false
+                `;
+                const cutPlayers = await client.query(cutPlayersQuery);
 
-                // Rimuovi dal roster
-                await client.query(`DELETE FROM rosters WHERE id = $1`, [roster_id]);
-                
-                refundedTeams.push({ playerName: player_name, refund: purchase_price, teamId: team_id });
+                for (const row of cutPlayers.rows) {
+                    const { roster_id, team_id, purchase_price, player_name } = row;
+                    
+                    // Rimborsa budget e ripristina la max bid esatta 
+                    // (+ purchase_price + 1 perché l'acquisto faceva - price - 1)
+                    await client.query(`
+                        UPDATE teams 
+                        SET remaining_budget = remaining_budget + $1,
+                            max_possible_bid = max_possible_bid + $1 + 1
+                        WHERE id = $2
+                    `, [purchase_price, team_id]);
+
+                    // Rimuovi dal roster
+                    await client.query(`DELETE FROM rosters WHERE id = $1`, [roster_id]);
+                    
+                    refundedTeams.push({ playerName: player_name, refund: purchase_price, teamId: team_id });
+                }
+                refundsProcessed = cutPlayers.rows.length;
             }
 
             await client.query('COMMIT');
             
             return {
                 success: true,
-                message: `Importazione completata! ${updatedCount} giocatori processati.`,
-                refundsProcessed: cutPlayers.rows.length,
+                message: mode === 'new_season' 
+                    ? `Nuova stagione pronta! ${updatedCount} giocatori caricati da zero. Tutte le leghe sono state resettate.`
+                    : `Importazione completata! ${updatedCount} giocatori processati.`,
+                refundsProcessed: refundsProcessed,
                 refundDetails: refundedTeams
             };
 

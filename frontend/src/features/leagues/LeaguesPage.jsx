@@ -45,7 +45,7 @@ const styles = {
 const LeaguesPage = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const [isUploadModalOpen, setIsUploadModalOpen] = React.useState(false);
+    const [uploadModalState, setUploadModalState] = React.useState({ open: false, mode: 'repair' });
 
     // Queries
     const { data: leagues = [], isLoading: loading } = useQuery({
@@ -96,15 +96,25 @@ const LeaguesPage = () => {
                     </Box>
                 </Box>
                 
-                {/* Upload Excel Button */}
-                <Button 
-                    variant="outlined" 
-                    color="primary" 
-                    startIcon={<UploadFileIcon />}
-                    onClick={() => setIsUploadModalOpen(true)}
-                >
-                    Carica Listone Excel
-                </Button>
+                {/* Upload Excel Buttons */}
+                <Box display="flex" gap={2}>
+                    <Button 
+                        variant="outlined" 
+                        color="primary" 
+                        startIcon={<UploadFileIcon />}
+                        onClick={() => setUploadModalState({ open: true, mode: 'repair' })}
+                    >
+                        Carica listone per asta di riparazione
+                    </Button>
+                    <Button 
+                        variant="outlined" 
+                        color="error" 
+                        startIcon={<UploadFileIcon />}
+                        onClick={() => setUploadModalState({ open: true, mode: 'new_season' })}
+                    >
+                        Carica listone per nuova stagione
+                    </Button>
+                </Box>
             </Paper>
 
             {loading ? (
@@ -121,11 +131,15 @@ const LeaguesPage = () => {
             )}
 
             <UploadListoneModal 
-                open={isUploadModalOpen} 
-                onClose={() => setIsUploadModalOpen(false)}
+                open={uploadModalState.open} 
+                mode={uploadModalState.mode}
+                onClose={() => setUploadModalState({ ...uploadModalState, open: false })}
                 onSuccess={() => {
                     alert('Listone caricato con successo!');
                     queryClient.invalidateQueries({ queryKey: ['players'] });
+                    if (uploadModalState.mode === 'new_season') {
+                        queryClient.invalidateQueries({ queryKey: ['leagues'] });
+                    }
                 }}
             />
         </Box>

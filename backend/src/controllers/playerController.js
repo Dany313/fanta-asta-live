@@ -30,8 +30,9 @@ exports.uploadPlayers = async (req, res) => {
       return res.status(400).json({ error: 'Nessun file caricato' });
     }
     
+    const { mode } = req.body;
     // req.file.buffer contains the binary data of the file
-    const result = await playerService.importPlayersFromBuffer(req.file.buffer);
+    const result = await playerService.importPlayersFromBuffer(req.file.buffer, mode);
     
     res.json(result);
   } catch (error) {
