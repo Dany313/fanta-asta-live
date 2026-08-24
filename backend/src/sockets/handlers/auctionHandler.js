@@ -185,9 +185,9 @@ module.exports = (io, socket) => {
   });
 
   // 3. ASSEGNAZIONE DEFINITIVA
-  socket.on('assign_player', async () => {
-    const winnerId = activeAuction.highestBidderId;
-    const finalPrice = activeAuction.highestBid;
+  socket.on('assign_player', async (payload) => {
+    const winnerId = payload?.overrideWinnerId || activeAuction.highestBidderId;
+    const finalPrice = payload?.overridePrice !== undefined ? payload.overridePrice : activeAuction.highestBid;
     const player = activeAuction.player;
 
     if (!winnerId || !player) {

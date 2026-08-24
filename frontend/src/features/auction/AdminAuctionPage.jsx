@@ -22,6 +22,7 @@ import { getTeams } from '../../api/teamsApi';
 import AdminCustomBet from './components/AdminCustomBet';
 import { Stack, Box, Typography } from '@mui/material';
 import AssignPlayerButton from './components/AssignPlayerButton';
+import AssignPlayerModal from './components/AssignPlayerModal';
 
 export default function AdminDashboard() {
     const { leagueId } = useParams();
@@ -93,10 +94,17 @@ export default function AdminDashboard() {
         socket.emit('place_bid', { teamId: Number(teamId), teamName, amount });
     };
 
-    const handleAssign = () => {
-        if (window.confirm(`Vendere ${activeAuction.player.name} a ${activeAuction.highestBidderName} per ${activeAuction.highestBid}?`)) {
-            socket.emit('assign_player');
-        }
+    const [isAssignModalOpen, setAssignModalOpen] = useState(false);
+    const [assignSnapshot, setAssignSnapshot] = useState(null);
+
+    const openAssignModal = () => {
+        setAssignSnapshot({ ...activeAuction });
+        setAssignModalOpen(true);
+    };
+
+    const confirmAssign = (overrideWinnerId, overridePrice) => {
+        socket.emit('assign_player', { overrideWinnerId, overridePrice });
+        setAssignModalOpen(false);
     };
 
     const handleAbort = () => {
@@ -213,11 +221,19 @@ export default function AdminDashboard() {
                         </Box>
                     </Stack>
                     <AssignPlayerButton
-                        onClick={handleAssign}
+                        onClick={openAssignModal}
                         disabled={!activeAuction.highestBid || activeAuction.highestBid <= 0}
                     />
                 </div>
             )}
+            
+            <AssignPlayerModal
+                open={isAssignModalOpen}
+                onClose={() => setAssignModalOpen(false)}
+                onConfirm={confirmAssign}
+                assignSnapshot={assignSnapshot}
+                teams={teams}
+            />
 
             {loadingPlayers ? (
                 <p>Caricamento in corso...</p>
