@@ -112,37 +112,34 @@ exports.delete_player_from_team = async (team_id, player_id, refundMode = 'PURCH
 exports.export_rosters_csv = async (leagueId) => {
     const data = await repo.getExportData(leagueId);
 
-    // CONFIGURAZIONE DELLE COLONNE DEL CSV
-    // Se serve aggiungere o togliere colonne, basta modificare questo array.
-    // label: Intestazione della colonna nel CSV finale
-    // field: Nome del campo nell'oggetto row restituito dal DB
-    const csvConfig = [
-        { label: 'Id_Giocatore', field: 'player_id' },
-        { label: 'Ruolo', field: 'role' },
-        { label: 'Nome_Giocatore', field: 'player_name' },
-        { label: 'Squadra_Serie_A', field: 'club' },
-        { label: 'FantaSquadra', field: 'team_name' },
-        { label: 'Costo_Acquisto', field: 'purchase_price' }
-    ];
+    // Raggruppa i giocatori per squadra
+    const teams = {};
+    for (const row of data) {
+        const teamName = row.team_name || 'Svincolati';
+        if (teamName === 'Svincolati') continue; // Opzionale: non esportiamo gli svincolati se presenti
+        if (!teams[teamName]) {
+            teams[teamName] = [];
+        }
+        teams[teamName].push(row);
+    }
 
-    const separator = ';';
+    // Genera il formato compatibile con Leghe Fantacalcio
+    let csvLines = [];
+    
+    for (const teamName in teams) {
+        csvLines.push('$,$,$');
+        
+        // Rimuove eventuali virgole per non rompere il CSV e mette tutto in MAIUSCOLO
+        const safeTeamName = teamName.replace(/,/g, '').toUpperCase();
+        
+        for (const row of teams[teamName]) {
+            // Formato richiesto: NomeSquadra,Id_Giocatore,Costo
+            const playerId = row.player_id;
+            const price = row.purchase_price;
+            csvLines.push(`${safeTeamName},${playerId},${price}`);
+        }
+    }
 
-    // Genera l'intestazione
-    const headerRow = csvConfig.map(col => col.label).join(separator);
-
-    // Genera le righe dati
-    const dataRows = data.map(row => {
-        return csvConfig.map(col => {
-            let value = row[col.field];
-            if (value === null || value === undefined) value = '';
-            // Se il valore contiene il separatore o accenti strani, lo mettiamo tra virgolette per sicurezza
-            if (typeof value === 'string' && value.includes(separator)) {
-                return `"${value}"`;
-            }
-            return value;
-        }).join(separator);
-    });
-
-    // Unisce intestazione e dati con un ritorno a capo (Windows compatibile \r\n per Excel)
-    return [headerRow, ...dataRows].join('\r\n');
+    // Unisce con un ritorno a capo (Windows compatibile \r\n) e aggiunge una riga vuota finale
+    return csvLines.join('\r\n') + '\r\n';
 };
