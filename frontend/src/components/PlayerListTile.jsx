@@ -43,7 +43,7 @@ export default function PlayerListTile({ player, onClick })  {
                     primary={<span style={styles.playerName}>{player.name}</span>}
                     secondary={
                         <span style={styles.playerDetails}>
-                            {player.club} • Qt. {player.current_price}
+                            {player.club} • Qt. {player.currentPrice} • FVM: {player.fvm}
                         </span>
                     }
                 />
