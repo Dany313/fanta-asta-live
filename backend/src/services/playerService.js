@@ -16,7 +16,16 @@ class PlayerService {
         try {
             const workbook = xlsx.read(buffer, { type: 'buffer' });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const playersData = xlsx.utils.sheet_to_json(sheet);
+
+            // Find the header row dynamically
+            const rows = xlsx.utils.sheet_to_json(sheet, { header: 1 });
+            const headerRowIndex = rows.findIndex(row => row.includes('Id') && row.includes('Nome'));
+            
+            if (headerRowIndex === -1) {
+                throw new Error("Formato file non valido: impossibile trovare le colonne 'Id' e 'Nome'");
+            }
+
+            const playersData = xlsx.utils.sheet_to_json(sheet, { range: headerRowIndex });
 
             client = await db.connect();
             await client.query('BEGIN');
