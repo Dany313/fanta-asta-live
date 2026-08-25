@@ -14,11 +14,13 @@ const styles = {
         overflowX: 'auto',
         overflowY: 'auto',
         display: 'flex',
+        alignItems: 'flex-start',
         gap: '20px',
         paddingBottom: '20px'
     },
     teamColumn: {
         minWidth: '260px',
+        height: 'max-content',
         backgroundColor: '#fff',
         borderRadius: '12px',
         boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
