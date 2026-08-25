@@ -32,7 +32,7 @@ const styles = {
 export default function PlayerTable({ open, onClose, players, onPlayerClick }) {
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState("");
-    const [maxPriceFilter, setMaxPriceFilter] = useState("");
+    const [sortOrder, setSortOrder] = useState("name_asc");
     const [page, setPage] = useState(0);
     const rowsPerPage = 20;
 
@@ -41,19 +41,31 @@ export default function PlayerTable({ open, onClose, players, onPlayerClick }) {
         onClose(); // Chiude la modale dopo la selezione
     };
 
-    // Filtra i giocatori in base all'input locale
+    // Filtra e ordina i giocatori
     const filteredPlayers = useMemo(() => {
-        return players.filter(player => {
+        let filtered = players.filter(player => {
             const nameMatch = player.name.toLowerCase().includes(searchTerm.toLowerCase());
             const roleMatch = !roleFilter || player.role === roleFilter;
-            const priceMatch = !maxPriceFilter || player.currentPrice <= parseInt(maxPriceFilter, 10);
-            return nameMatch && roleMatch && priceMatch;
+            return nameMatch && roleMatch;
         });
-    }, [players, searchTerm, roleFilter, maxPriceFilter]);
+
+        filtered.sort((a, b) => {
+            if (sortOrder === "name_asc") {
+                return a.name.localeCompare(b.name);
+            } else if (sortOrder === "price_desc") {
+                return b.currentPrice - a.currentPrice;
+            } else if (sortOrder === "price_asc") {
+                return a.currentPrice - b.currentPrice;
+            }
+            return 0;
+        });
+
+        return filtered;
+    }, [players, searchTerm, roleFilter, sortOrder]);
 
     useEffect(() => {
         setPage(0);
-    }, [searchTerm, roleFilter, maxPriceFilter]);
+    }, [searchTerm, roleFilter, sortOrder]);
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -86,16 +98,18 @@ export default function PlayerTable({ open, onClose, players, onPlayerClick }) {
                                 <MenuItem value="A">A</MenuItem>
                             </Select>
                         </FormControl>
-                        <TextField
-                            label="Qt. Max"
-                            variant="outlined"
-                            size="small"
-                            type="number"
-                            style={{ maxWidth: 80 }}
-                            value={maxPriceFilter}
-                            onChange={(e) => setMaxPriceFilter(e.target.value)}
-                            InputProps={{ inputProps: { min: 1 } }}
-                        />
+                        <FormControl size="small" style={{ minWidth: 120 }}>
+                            <InputLabel>Ordina per</InputLabel>
+                            <Select
+                                value={sortOrder}
+                                label="Ordina per"
+                                onChange={(e) => setSortOrder(e.target.value)}
+                            >
+                                <MenuItem value="name_asc">Nome (A-Z)</MenuItem>
+                                <MenuItem value="price_desc">Quotazione ⬇</MenuItem>
+                                <MenuItem value="price_asc">Quotazione ⬆</MenuItem>
+                            </Select>
+                        </FormControl>
                     </Box>
                 </DialogTitle>
                 <DialogContent dividers>
