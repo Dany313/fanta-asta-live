@@ -32,6 +32,7 @@ const styles = {
 export default function PlayerTable({ open, onClose, players, onPlayerClick }) {
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState("");
+    const [maxPriceFilter, setMaxPriceFilter] = useState("");
     const [page, setPage] = useState(0);
     const rowsPerPage = 20;
 
@@ -45,13 +46,14 @@ export default function PlayerTable({ open, onClose, players, onPlayerClick }) {
         return players.filter(player => {
             const nameMatch = player.name.toLowerCase().includes(searchTerm.toLowerCase());
             const roleMatch = !roleFilter || player.role === roleFilter;
-            return nameMatch && roleMatch;
+            const priceMatch = !maxPriceFilter || player.currentPrice <= parseInt(maxPriceFilter, 10);
+            return nameMatch && roleMatch && priceMatch;
         });
-    }, [players, searchTerm, roleFilter]);
+    }, [players, searchTerm, roleFilter, maxPriceFilter]);
 
     useEffect(() => {
         setPage(0);
-    }, [searchTerm, roleFilter]);
+    }, [searchTerm, roleFilter, maxPriceFilter]);
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -70,7 +72,7 @@ export default function PlayerTable({ open, onClose, players, onPlayerClick }) {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        <FormControl size="small" style={{ minWidth: 100 }}>
+                        <FormControl size="small" style={{ minWidth: 90 }}>
                             <InputLabel>Ruolo</InputLabel>
                             <Select
                                 value={roleFilter}
@@ -84,6 +86,16 @@ export default function PlayerTable({ open, onClose, players, onPlayerClick }) {
                                 <MenuItem value="A">A</MenuItem>
                             </Select>
                         </FormControl>
+                        <TextField
+                            label="Qt. Max"
+                            variant="outlined"
+                            size="small"
+                            type="number"
+                            style={{ maxWidth: 80 }}
+                            value={maxPriceFilter}
+                            onChange={(e) => setMaxPriceFilter(e.target.value)}
+                            InputProps={{ inputProps: { min: 1 } }}
+                        />
                     </Box>
                 </DialogTitle>
                 <DialogContent dividers>
