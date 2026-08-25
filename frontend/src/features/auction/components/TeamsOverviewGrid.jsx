@@ -10,7 +10,9 @@ const styles = {
     container: {
         marginTop: '30px',
         width: '100%',
+        maxHeight: '75vh',
         overflowX: 'auto',
+        overflowY: 'auto',
         display: 'flex',
         gap: '20px',
         paddingBottom: '20px'
@@ -23,14 +25,17 @@ const styles = {
         border: '1px solid #dfe4ea',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden'
     },
     teamHeader: {
         backgroundColor: '#2f3542',
         color: '#fff',
         padding: '15px',
         textAlign: 'center',
-        position: 'relative'
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        borderTopLeftRadius: '12px',
+        borderTopRightRadius: '12px',
     },
     teamName: {
         fontWeight: 'bold',
